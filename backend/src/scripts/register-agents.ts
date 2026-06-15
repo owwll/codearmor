@@ -89,7 +89,8 @@ async function registerAll() {
 
     const url = `${cleanBase}/agent/register`;
     const result = await makePostRequest(url, payload);
-
+    console.log(result.status);
+    console.log(result.responseText);
     if (result.ok) {
       console.log(`✅ Registered Agent: \x1b[32m${agent.id}\x1b[0m`);
     } else {
