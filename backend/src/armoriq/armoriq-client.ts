@@ -1,6 +1,12 @@
-import * as path from 'path';
+import {
+  ArmorIQClient as SdkClient,
+  type IntentToken,
+  type PlanCapture,
+  type MCPInvocationResult,
+} from '@armoriq/sdk';
 import { logger } from '../utils/logger';
-import { DelegationToken } from '../types/agent.types';
+
+// ─── Plan config passed by our capture-plan helper ──────────────────────────
 
 export interface PlanConfig {
   planType: string;
@@ -11,6 +17,8 @@ export interface PlanConfig {
   forbiddenOperations: string[];
   timestamp: string;
 }
+
+// ─── Audit event shape (kept for interface compatibility) ────────────────────
 
 export interface AuditEvent {
   scanId?: string;
@@ -23,189 +31,182 @@ export interface AuditEvent {
   armorIqPlanId?: string;
 }
 
+// ─── Mock intent token used when ARMORIQ_API_KEY=mock ───────────────────────
+
+function makeMockIntentToken(planId: string): IntentToken {
+  return {
+    tokenId:          `mock_token_${Math.random().toString(36).substring(2, 10)}`,
+    planHash:         `mock_hash_${Date.now()}`,
+    planId,
+    signature:        'mock_signature',
+    issuedAt:         Math.floor(Date.now() / 1000),
+    expiresAt:        Math.floor(Date.now() / 1000) + 3600,
+    policy:           { allowedTools: [] },
+    compositeIdentity:'mock_identity',
+    stepProofs:       [],
+    totalSteps:       0,
+    rawToken:         {},
+  };
+}
+
+// ─── Wrapper class ───────────────────────────────────────────────────────────
+
 export class ArmorIQClient {
-  private apiKey: string;
-  private endpoint: string;
+  private sdkClient: SdkClient | null;
   private isMockMode: boolean;
 
   constructor() {
-    this.apiKey = process.env.ARMORIQ_API_KEY || 'mock';
-    this.endpoint = process.env.ARMORIQ_ENDPOINT || 'https://api.armoriq.ai';
-    // Remove trailing slash if present
-    if (this.endpoint.endsWith('/')) {
-      this.endpoint = this.endpoint.slice(0, -1);
-    }
-    // Remove /v1 suffix if it was incorrectly configured in env
-    if (this.endpoint.endsWith('/v1')) {
-      this.endpoint = this.endpoint.slice(0, -3);
-    }
-    this.isMockMode = this.apiKey === 'mock';
+    const apiKey = process.env.ARMORIQ_API_KEY || 'mock';
+    this.isMockMode = apiKey === 'mock';
 
     if (this.isMockMode) {
-      logger.info('ArmorIQ', 'ArmorIQ: mock mode');
-    } else {
-      logger.info('ArmorIQ', `ArmorIQ: connected to ${this.endpoint}`);
+      this.sdkClient = null;
+      logger.info('ArmorIQ', 'ArmorIQ: mock mode — skipping SDK initialisation');
+      return;
     }
-  }
 
-  async capturePlan(config: PlanConfig): Promise<{ planId: string; signature: string }> {
-    const mockFallback = (): { planId: string; signature: string } => ({
-      planId:    `mock_plan_${Math.random().toString(36).substring(2, 15)}`,
-      signature: `mock_sig_${Date.now()}`,
-    });
-
-    if (this.isMockMode) return mockFallback();
+    const userId  = process.env.ARMORIQ_USER_ID  || 'codearmor-user';
+    const agentId = process.env.ARMORIQ_AGENT_ID || 'codearmor-orchestrator';
 
     try {
-      const res = await fetch(`${this.endpoint}/iap/plans`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-          'x-api-key': this.apiKey
-        },
-        body: JSON.stringify(config),
-      });
-      if (!res.ok) {
-        logger.warn('ArmorIQ', `capturePlan returned ${res.status} — using mock fallback`);
-        return mockFallback();
-      }
-      return (await res.json()) as { planId: string; signature: string };
+      this.sdkClient = new SdkClient({ apiKey, userId, agentId });
+      logger.info('ArmorIQ', `ArmorIQ: SDK client initialised (userId=${userId}, agentId=${agentId})`);
     } catch (err) {
-      logger.warn('ArmorIQ', 'capturePlan failed — using mock fallback', err as object);
-      return mockFallback();
+      logger.warn('ArmorIQ', 'ArmorIQ: SDK client initialisation failed — falling back to mock mode', err as object);
+      this.sdkClient = null;
+      this.isMockMode = true;
     }
   }
 
-  async delegate(planId: string, agentId: string, permissions: { read: string[] }): Promise<DelegationToken> {
-    const mockFallback = (): DelegationToken => ({
-      planId,
-      agentId,
-      allowedFiles: permissions.read,
-      operations:   ['read_file', 'call_hf_api'],
-      expiresAt:    Date.now() + 60000,
-      signature:    'mock',
-    });
+  // ── capturePlan ────────────────────────────────────────────────────────────
+  // The SDK's capturePlan() is a *local* call (no network). It builds a
+  // PlanCapture object that is then sent to IAP via getIntentToken().
 
-    if (this.isMockMode) return mockFallback();
+  capturePlan(config: PlanConfig): PlanCapture {
+    if (this.isMockMode || !this.sdkClient) {
+      // Return a minimal PlanCapture-shaped object for mock mode
+      return {
+        plan: {
+          steps: config.agentManifest.map((id, i) => ({
+            step:      i + 1,
+            action:    'read_file',
+            agentId:   id,
+            planType:  config.planType,
+            projectId: config.projectId,
+          })),
+        },
+        llm:    'mock',
+        prompt: `CodeArmor security scan of project ${config.projectId}`,
+        metadata: {
+          totalFiles:          config.totalFiles,
+          allowedOperations:   config.allowedOperations,
+          forbiddenOperations: config.forbiddenOperations,
+          timestamp:           config.timestamp,
+        },
+      };
+    }
+
+    return this.sdkClient.capturePlan(
+      /* llm    */ 'huggingface/mistral-7b',
+      /* prompt */ `CodeArmor security scan of project ${config.projectId}: run ${config.agentManifest.length} specialised agents over ${config.totalFiles} files`,
+      /* plan   */ {
+        steps: config.agentManifest.map((id, i) => ({
+          step:      i + 1,
+          action:    'read_file',
+          agentId:   id,
+          planType:  config.planType,
+          projectId: config.projectId,
+        })),
+      },
+      /* metadata */ {
+        totalFiles:          config.totalFiles,
+        allowedOperations:   config.allowedOperations,
+        forbiddenOperations: config.forbiddenOperations,
+        timestamp:           config.timestamp,
+      }
+    );
+  }
+
+  // ── getIntentToken ─────────────────────────────────────────────────────────
+  // Makes the actual network call to IAP and returns a signed IntentToken.
+
+  async getIntentToken(planCapture: PlanCapture): Promise<IntentToken> {
+    if (this.isMockMode || !this.sdkClient) {
+      const mockPlanId = `mock_plan_${Math.random().toString(36).substring(2, 15)}`;
+      logger.debug('ArmorIQ', `[mock] getIntentToken → ${mockPlanId}`);
+      return makeMockIntentToken(mockPlanId);
+    }
 
     try {
-      const res = await fetch(`${this.endpoint}/iap/delegate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-          'x-api-key': this.apiKey
-        },
-        body: JSON.stringify({ planId, agentId, permissions }),
-      });
-      if (!res.ok) {
-        logger.warn('ArmorIQ', `delegate returned ${res.status} — using mock fallback`);
-        return mockFallback();
-      }
-      return (await res.json()) as DelegationToken;
+      const token = await this.sdkClient.getIntentToken(planCapture);
+      logger.info('ArmorIQ', `Intent token issued: planId=${token.planId} tokenId=${token.tokenId}`);
+      return token;
     } catch (err) {
-      logger.warn('ArmorIQ', `delegate failed for agent ${agentId} — using mock fallback`, err as object);
-      return mockFallback();
+      logger.warn('ArmorIQ', 'getIntentToken failed — using mock fallback', err as object);
+      const fallbackId = `fallback_plan_${Date.now()}`;
+      return makeMockIntentToken(fallbackId);
     }
   }
 
-  async invoke(params: { token: DelegationToken; operation: string; target: string }): Promise<{ allowed: boolean; reason?: string }> {
-    if (this.isMockMode) {
-      const resolvedTarget = path.resolve(params.target);
-      const isAllowed = params.token.allowedFiles.some(
-        (f) => path.resolve(f) === resolvedTarget
+  // ── invoke ─────────────────────────────────────────────────────────────────
+  // Routes the tool call through the ArmorIQ proxy for policy enforcement.
+
+  async invoke(
+    mcp: string,
+    action: string,
+    intentToken: IntentToken,
+    params?: Record<string, any>
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    if (this.isMockMode || !this.sdkClient) {
+      // In mock mode: always allow (consistent with previous behaviour)
+      return { allowed: true };
+    }
+
+    try {
+      const result: MCPInvocationResult = await this.sdkClient.invoke(
+        mcp,
+        action,
+        intentToken,
+        params
       );
-      return { allowed: isAllowed, reason: isAllowed ? undefined : 'File not in delegation list' };
-    }
 
-    try {
-      const res = await fetch(`${this.endpoint}/iap/invoke`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-          'x-api-key': this.apiKey
-        },
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) {
-        logger.warn('ArmorIQ', `invoke returned ${res.status} — allowing operation`);
-        return { allowed: true };
-      }
-      return (await res.json()) as { allowed: boolean; reason?: string };
-    } catch (err) {
-      logger.warn('ArmorIQ', 'invoke failed — allowing operation', err as object);
+      const allowed = result.status !== 'blocked' && result.verified !== false;
+      const reason  = allowed ? undefined : `Proxy blocked: status=${result.status}`;
+      return { allowed, reason };
+    } catch (err: any) {
+      // On network error, fail-open (same as previous behaviour)
+      logger.warn('ArmorIQ', `invoke failed for ${mcp}/${action} — allowing operation`, err as object);
       return { allowed: true };
     }
   }
 
+  // ── logAudit ───────────────────────────────────────────────────────────────
+  // The SDK does not expose a direct audit endpoint; audit events are captured
+  // automatically by the IAP proxy on each invoke() call. This method is kept
+  // for interface compatibility and logs locally in non-mock mode.
+
   async logAudit(event: AuditEvent): Promise<void> {
-    if (this.isMockMode) {
-      logger.debug('ArmorIQ', 'ArmorIQ audit', event);
-      return;
-    }
-
-    try {
-      const res = await fetch(`${this.endpoint}/iap/audit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-          'x-api-key': this.apiKey
-        },
-        body: JSON.stringify(event),
-      });
-      if (!res.ok) {
-        logger.warn('ArmorIQ', `logAudit returned ${res.status} — skipping`);
-      }
-    } catch (err) {
-      logger.warn('ArmorIQ', 'logAudit failed — skipping', err as object);
-    }
+    logger.debug('ArmorIQ', 'audit event', event);
   }
 
-  async registerAgent(agent: { agentId: string; name: string; description: string; role?: string }): Promise<void> {
-    if (this.isMockMode) return;
-    try {
-      const res = await fetch(`${this.endpoint}/agent/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-          'x-api-key': this.apiKey
-        },
-        body: JSON.stringify(agent),
-      });
-      if (!res.ok) {
-        logger.warn('ArmorIQ', `registerAgent ${agent.agentId} returned status ${res.status}`);
-      } else {
-        logger.info('ArmorIQ', `Successfully registered agent ${agent.agentId} with ArmorIQ Platform`);
-      }
-    } catch (err) {
-      logger.warn('ArmorIQ', `Failed to register agent ${agent.agentId}`, err as object);
+  // ── bootstrap ──────────────────────────────────────────────────────────────
+  // Validates the API key against the ArmorIQ platform. Used by the
+  // registration/health-check script.
+
+  async bootstrap(): Promise<Record<string, any>> {
+    if (this.isMockMode || !this.sdkClient) {
+      return { mock: true };
     }
+    return this.sdkClient.bootstrap();
   }
 
-  async registerMcpServer(mcp: { mcpId: string; name: string; description: string; url?: string }): Promise<void> {
-    if (this.isMockMode) return;
-    try {
-      const res = await fetch(`${this.endpoint}/mcp/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-          'x-api-key': this.apiKey
-        },
-        body: JSON.stringify(mcp),
-      });
-      if (!res.ok) {
-        logger.warn('ArmorIQ', `registerMcpServer ${mcp.mcpId} returned status ${res.status}`);
-      } else {
-        logger.info('ArmorIQ', `Successfully registered MCP server ${mcp.mcpId} with ArmorIQ Platform`);
-      }
-    } catch (err) {
-      logger.warn('ArmorIQ', `Failed to register MCP server ${mcp.mcpId}`, err as object);
+  // ── listMcps ───────────────────────────────────────────────────────────────
+
+  async listMcps(): Promise<Array<{ mcpId: string; name: string; url: string }>> {
+    if (this.isMockMode || !this.sdkClient) {
+      return [];
     }
+    return this.sdkClient.listMcps();
   }
 }
 

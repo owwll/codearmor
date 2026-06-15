@@ -78,27 +78,34 @@ export async function orchestrateScan(request: ScanRequest): Promise<ScanResult>
     });
 
     // ── Step 3 — ArmorIQ plan ────────────────────────────────────────────────
-    const plan = await captureScanPlan(fileMap);
+    // captureScanPlan() performs a two-step SDK flow:
+    //   1. client.capturePlan()     — local, no network, builds PlanCapture
+    //   2. client.getIntentToken()  — network call to IAP, returns signed IntentToken
+    const intentToken = await captureScanPlan(fileMap);
+    const planId = intentToken.planId ?? intentToken.tokenId;
     await queries.insertAuditEvent({
       id:             crypto.randomUUID(),
       scanId,
       eventType:      'PLAN_CREATED',
       action:         'ArmorIQ scan plan captured',
       target:         request.projectPath,
-      result:         `Plan ID: ${plan.planId}`,
-      armorIqPlanId:  plan.planId,
+      result:         `Plan ID: ${planId} | Token: ${intentToken.tokenId}`,
+      armorIqPlanId:  planId,
     });
 
     // ── Step 4 — Delegation tokens ───────────────────────────────────────────
-    const agentTokens = await delegateToAgents(plan.planId, fileMap);
+    // delegateToAgents() broadcasts the IntentToken to all 11 agents.
+    // The SDK model embeds per-step Merkle proofs in the token; the proxy
+    // enforces per-agent policy centrally on each invoke() call.
+    const agentTokens = await delegateToAgents(intentToken, fileMap);
     await queries.insertAuditEvent({
       id:            crypto.randomUUID(),
       scanId,
       eventType:     'AGENT_DELEGATED',
-      action:        'All 11 security agents received ArmorIQ delegation tokens',
+      action:        'All 11 security agents received ArmorIQ intent token',
       target:        'all-agents',
-      result:        `${agentTokens.size} tokens issued`,
-      armorIqPlanId: plan.planId,
+      result:        `${agentTokens.size} agents delegated`,
+      armorIqPlanId: planId,
     });
 
     // ── Step 5 — Run agents in parallel ──────────────────────────────────────
@@ -127,7 +134,7 @@ export async function orchestrateScan(request: ScanRequest): Promise<ScanResult>
       action:    'ArmorClaw validated all agent findings',
       target:    'all-findings',
       result:    `${validated.length} / ${agentResult.rawFindings.length} findings validated`,
-      armorIqPlanId: plan.planId,
+      armorIqPlanId: planId,
     });
 
     // ── Step 7 — Deduplicate and score ───────────────────────────────────────
@@ -178,7 +185,7 @@ export async function orchestrateScan(request: ScanRequest): Promise<ScanResult>
       infoCount:     summary.info,
       completedAt,
       durationMs,
-      armorIqPlanId: plan.planId,
+      armorIqPlanId: planId,
     });
 
     await queries.upsertProject({
@@ -199,7 +206,7 @@ export async function orchestrateScan(request: ScanRequest): Promise<ScanResult>
       action:        'Security scan completed successfully',
       target:        request.projectPath,
       result:        `Score: ${score} | ${summary.critical}C / ${summary.warning}W / ${summary.info}I findings`,
-      armorIqPlanId: plan.planId,
+      armorIqPlanId: planId,
     });
 
     // ── Step 11 — Broadcast completion ───────────────────────────────────────
@@ -224,7 +231,7 @@ export async function orchestrateScan(request: ScanRequest): Promise<ScanResult>
       startedAt,
       completedAt,
       durationMs,
-      armorIqPlanId: plan.planId,
+      armorIqPlanId: planId,
     };
   } catch (err: any) {
     await queries.updateScan(scanId, { status: 'failed' });

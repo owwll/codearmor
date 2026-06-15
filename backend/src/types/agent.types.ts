@@ -1,3 +1,5 @@
+import type { IntentToken } from '@armoriq/sdk';
+
 export interface FileMap {
   rootPath: string;
   allFiles: string[];
@@ -12,14 +14,13 @@ export interface FileMap {
   totalCount: number;
 }
 
-export interface DelegationToken {
-  planId: string;
-  agentId: string;
-  allowedFiles: string[];
-  operations: string[];
-  expiresAt: number;
-  signature: string;
-}
+/**
+ * DelegationToken is now an alias for the SDK's IntentToken.
+ * All agents and the agent-runner receive an IntentToken from ArmorIQ
+ * that authorises them to call the proxy on behalf of a specific plan step.
+ * The alias keeps all downstream imports unchanged.
+ */
+export type DelegationToken = IntentToken;
 
 export interface AgentConfig {
   model: string;
