@@ -1,0 +1,51 @@
+{
+  "name": "codearmor",
+  "displayName": "CodeArmor — AI Security Scanner",
+  "description": "Automatically scan your codebase for 40+ security vulnerability types using 11 parallel AI agents",
+  "version": "1.0.0",
+  "publisher": "codearmor",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Linters", "Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "codearmor.scan", "title": "CodeArmor: Scan Project Now", "icon": "$(shield)" },
+      { "command": "codearmor.openPanel", "title": "CodeArmor: Open Security Panel" }
+    ],
+    "menus": {
+      "editor/title": [{ "command": "codearmor.scan", "group": "navigation" }]
+    },
+    "configuration": {
+      "title": "CodeArmor",
+      "properties": {
+        "codearmor.autoScanOnOpen": { "type": "boolean", "default": true },
+        "codearmor.autoScanOnSave": { "type": "boolean", "default": false },
+        "codearmor.backendPort": { "type": "number", "default": 3847 }
+      }
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --platform=node --target=node20",
+    "build:webview": "esbuild src/webview/App.tsx --bundle --outfile=dist/webview/bundle.js --platform=browser --jsx=automatic && cp src/webview/index.html dist/webview/index.html",
+    "watch": "npm run build -- --watch",
+    "watch:webview": "cp src/webview/index.html dist/webview/index.html && esbuild src/webview/App.tsx --bundle --outfile=dist/webview/bundle.js --platform=browser --jsx=automatic --watch",
+    "package": "vsce package",
+    "typecheck": "tsc --noEmit",
+    "vscode:prepublish": "npm run build && npm run build:webview"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "typescript": "^5.3.0",
+    "esbuild": "^0.20.0",
+    "@vscode/vsce": "^2.22.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "restaurant-api-demo",
+  "version": "1.0.0",
+  "dependencies": {
+    "express": "4.16.0",
+    "jsonwebtoken": "8.5.1",
+    "better-sqlite3": "^9.0.0"
+  }
+}
