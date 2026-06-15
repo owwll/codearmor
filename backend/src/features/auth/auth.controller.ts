@@ -72,7 +72,7 @@ export async function login(req: Request, res: Response): Promise<void> {
     const user = await queries.getUserByUsername(username.trim());
 
     if (!user) {
-      await bcrypt.compare(password, '$2b$12$invalidhashpadding000000000000000000000000000000000000000');
+      await bcrypt.compare(password, '$2a$12$pCIm0uxu4Wr49ElKexZKNeX/uYbeC.phPCXebuKALrVM9Mo3n23l2');
       res.status(401).json(INVALID_CREDENTIALS);
       return;
     }
@@ -83,7 +83,12 @@ export async function login(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const secret = process.env.JWT_SECRET || 'codearmor-dev-secret';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      res.status(500).json({ error: 'Server configuration error: JWT_SECRET not set' });
+      return;
+    }
+
     const token = jwt.sign(
       { userId: user.id, username: user.username, role: user.role },
       secret,
@@ -130,7 +135,6 @@ export async function status(_req: Request, res: Response): Promise<void> {
 
     res.json({
       authenticated: true,
-      token: session.token,
       user: {
         id: user.id,
         username: user.username,
@@ -158,7 +162,12 @@ export async function callback(req: Request, res: Response): Promise<void> {
   }
 
   try {
-    const secret = process.env.JWT_SECRET || 'codearmor-dev-secret';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      res.status(500).send('<h1>Server configuration error: JWT_SECRET not set</h1>');
+      return;
+    }
+
     const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] }) as {
       userId: string;
       username: string;
@@ -172,7 +181,6 @@ export async function callback(req: Request, res: Response): Promise<void> {
     }
 
     saveSession({
-      token,
       user: {
         id: user.id,
         username: user.username,

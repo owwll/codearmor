@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { logger } from '../../utils/logger';
+import * as queries from '../../db/queries';
 
 declare global {
   namespace Express {
@@ -35,7 +36,11 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     return;
   }
 
-  const secret = process.env.JWT_SECRET || 'codearmor-dev-secret';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    res.status(500).json({ error: 'Server configuration error: JWT_SECRET not set' });
+    return;
+  }
 
   try {
     const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] }) as {
@@ -63,12 +68,17 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 /**
  * requireAdmin — enforcing admin role check after authentication.
  */
-export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
-  requireAuth(req, res, () => {
-    if (req.user?.role !== 'admin') {
-      res.status(403).json({ error: 'Forbidden: Admin access required' });
-      return;
+export async function requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
+  requireAuth(req, res, async () => {
+    try {
+      const user = await queries.getUserById(req.user!.userId);
+      if (!user || user.role !== 'admin') {
+        res.status(403).json({ error: 'Forbidden: Admin access required' });
+        return;
+      }
+      next();
+    } catch (err) {
+      next(err);
     }
-    next();
   });
 }

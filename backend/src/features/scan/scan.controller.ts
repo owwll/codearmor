@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import * as crypto from 'crypto';
 import { Request, Response } from 'express';
 import { orchestrateScan } from './orchestrator';
@@ -34,6 +35,10 @@ export async function startScan(req: Request, res: Response): Promise<void> {
   }
 
   const resolvedPath = path.resolve(projectPath.trim());
+  if (!resolvedPath.startsWith(os.homedir())) {
+    res.status(403).json({ error: 'projectPath must be within the user home directory' });
+    return;
+  }
   if (!fs.existsSync(resolvedPath)) {
     res.status(400).json({ error: `Path does not exist: ${resolvedPath}` });
     return;

@@ -71,8 +71,8 @@ export class ArmorIQService {
       return response.data; // e.g., { allowed: true/false }
     } catch (error: any) {
       if (error.response && error.response.status === 404) {
-        console.warn('verifyIntent returned 404 — allowing action (custom platform setup or unconfigured endpoint)');
-        return { allowed: true, reason: '404 fallback' };
+        console.warn('verifyIntent returned 404 — blocking action (endpoint misconfigured)');
+        return { allowed: false, reason: 'Endpoint not found (404)' };
       }
       console.error('Failed to verify intent with ArmorIQ:', error.message || error);
       // Fail secure pattern: block action if ArmorIQ is unreachable or returns other errors

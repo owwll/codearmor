@@ -111,33 +111,37 @@ export async function checkAndIncrementScanLimit(userId: string): Promise<{
   plan: string;
 }> {
   try {
-    const user = await getUserById(userId);
-    if (!user) {
-      return { allowed: false, remaining: 0, plan: 'free' };
-    }
+    return await db.transaction(async (tx) => {
+      const results = await tx.select().from(users).where(eq(users.id, userId)).limit(1);
+      const user = results[0] as UserRecord | undefined;
+      
+      if (!user) {
+        return { allowed: false, remaining: 0, plan: 'free' };
+      }
 
-    if (user.plan === 'pro' || user.role === 'admin') {
-      return { allowed: true, remaining: 9999, plan: user.plan };
-    }
+      if (user.plan === 'pro' || user.role === 'admin') {
+        return { allowed: true, remaining: 9999, plan: user.plan };
+      }
 
-    const todayStr = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
-    let currentScans = user.scansToday;
+      const todayStr = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
+      let currentScans = user.scansToday;
 
-    if (user.lastScanDate !== todayStr) {
-      currentScans = 0;
-    }
+      if (user.lastScanDate !== todayStr) {
+        currentScans = 0;
+      }
 
-    if (currentScans >= 3) {
-      return { allowed: false, remaining: 0, plan: 'free' };
-    }
+      if (currentScans >= 3) {
+        return { allowed: false, remaining: 0, plan: 'free' };
+      }
 
-    const newScansCount = currentScans + 1;
-    await db.update(users).set({
-      scansToday: newScansCount,
-      lastScanDate: todayStr
-    }).where(eq(users.id, userId));
+      const newScansCount = currentScans + 1;
+      await tx.update(users).set({
+        scansToday: newScansCount,
+        lastScanDate: todayStr
+      }).where(eq(users.id, userId));
 
-    return { allowed: true, remaining: 3 - newScansCount, plan: 'free' };
+      return { allowed: true, remaining: 3 - newScansCount, plan: 'free' };
+    });
   } catch (err) {
     logger.error('UserQueries', `Failed to check scan limits for user ${userId}`, err);
     throw err;

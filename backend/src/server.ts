@@ -59,7 +59,7 @@ app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
 
 // ── HTTP request logging (dev only) ──────────────────────────────────────────
 if (IS_DEV) {
-  app.use(morgan('combined'));
+  app.use(morgan('dev'));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
