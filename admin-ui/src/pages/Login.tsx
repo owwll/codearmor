@@ -2,20 +2,19 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { api } from '../api/client';
-import { Shield, Lock, User, AlertCircle, Loader2, ArrowRightLeft } from 'lucide-react';
+import { Lock, User, AlertCircle, Loader2, ArrowRightLeft, Shield } from 'lucide-react';
 
 export default function Login() {
   const { login } = useAuth();
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSignup, setIsSignup] = useState(false);
-  const [error, setError]       = useState('');
-  const [success, setSuccess]   = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Parse callback URL from query parameters
   const callbackUrl = new URLSearchParams(window.location.search).get('callback');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,16 +31,13 @@ export default function Login() {
 
     try {
       if (isSignup) {
-        // Register new user
         await api.signup(username, password);
-        setSuccess('Account created successfully! Logging you in...');
+        setSuccess('Account created. Signing you in...');
       }
 
-      // Log the user in (works for both standard login and post-signup auto-login)
       const authResult = await login(username, password);
-      
+
       if (callbackUrl) {
-        // Redirect back to extension with authorization token
         const redirectTarget = `${callbackUrl}?token=${encodeURIComponent(authResult.token)}`;
         window.location.href = redirectTarget;
       } else {
@@ -49,7 +45,7 @@ export default function Login() {
       }
     } catch (err: any) {
       if (isSignup) {
-        setError(err.response?.data?.error ?? 'Registration failed. Please try again.');
+        setError(err.response?.data?.error ?? 'Registration failed.');
       } else {
         setError(err.response?.data?.error ?? 'Invalid username or password');
       }
@@ -59,137 +55,141 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4 relative overflow-hidden select-none">
-      {/* Subtle SaaS background glows */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-sky-500/5 rounded-full blur-[120px] pointer-events-none" />
-
-      <div className="w-full max-w-md relative z-10">
-        {/* Brand Header */}
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(10,90,170,0.12),_transparent_50%),_radial-gradient(ellipse_at_bottom_left,_rgba(79,70,229,0.08),_transparent_50%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM0ZjQ2ZTUiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-40 pointer-events-none" />
+      <div className="w-full max-w-sm relative">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 shadow-xl shadow-indigo-500/10 mb-4">
-            <Shield className="w-7 h-7 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-lg shadow-blue-500/5">
+            <img src="/codearmor.png" alt="" className="w-10 h-10" />
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight font-display">CodeArmor</h1>
-          <p className="text-slate-500 text-sm mt-1.5 font-medium">Enterprise Security Intelligence</p>
+          <h1 className="text-2xl font-bold text-white">CodeArmor</h1>
+          <p className="text-sm text-slate-400 mt-1">Sign in to your account</p>
         </div>
 
-        {/* white card */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-xl shadow-slate-100/60">
-          {/* Tab Switcher */}
-          <div className="flex border-b border-slate-150 mb-6">
+        <div className="bg-slate-800/40 backdrop-blur-xl rounded-lg border border-slate-700/50 shadow-xl shadow-blue-500/5">
+          {/* Tab toggle */}
+          <div className="flex p-1.5 gap-1 bg-slate-900/50 border-b border-slate-700/50 rounded-t-lg">
             <button
               onClick={() => { setIsSignup(false); setError(''); setSuccess(''); }}
-              className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all ${
-                !isSignup ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-450 hover:text-slate-700'
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                !isSignup ? 'bg-slate-700/80 text-white shadow-sm border border-slate-600/50' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               Sign In
             </button>
             <button
               onClick={() => { setIsSignup(true); setError(''); setSuccess(''); }}
-              className={`flex-1 pb-3 text-sm font-bold border-b-2 transition-all ${
-                isSignup ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-450 hover:text-slate-700'
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                isSignup ? 'bg-slate-700/80 text-white shadow-sm border border-slate-600/50' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               Register
             </button>
           </div>
 
-          {callbackUrl && (
-            <div className="bg-indigo-50 border border-indigo-150 text-indigo-750 text-xs px-3.5 py-2.5 rounded-xl mb-4 flex items-center gap-2">
-              <ArrowRightLeft className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-              <span>Authenticating extension request...</span>
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-rose-500/5 border border-rose-500/20 text-rose-600 text-xs px-4 py-3.5 rounded-xl mb-4 flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span className="font-semibold">{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-emerald-500/5 border border-emerald-500/20 text-emerald-600 text-xs px-4 py-3.5 rounded-xl mb-4">
-              <span className="font-semibold">{success}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Username</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <User className="w-4 h-4" />
-                </span>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  autoFocus
-                  placeholder="Enter username"
-                  className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-650 focus:ring-1 focus:ring-indigo-500/30 transition-all duration-200"
-                />
+          <div className="p-6">
+            {callbackUrl && (
+              <div className="bg-blue-500/10 border border-blue-400/20 text-blue-300 text-xs px-3.5 py-2.5 rounded-md mb-4 flex items-center gap-2">
+                <ArrowRightLeft className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>Authenticating extension request...</span>
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="block text-xs text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Password</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Lock className="w-4 h-4" />
-                </span>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-650 focus:ring-1 focus:ring-indigo-500/30 transition-all duration-200"
-                />
+            {error && (
+              <div className="bg-red-500/10 border border-red-400/20 rounded-md mb-4 flex items-start gap-2.5 px-4 py-3 text-xs text-red-300">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                <span className="font-medium">{error}</span>
               </div>
-            </div>
+            )}
 
-            {isSignup && (
+            {success && (
+              <div className="bg-emerald-500/10 border border-emerald-400/20 rounded-md mb-4 px-4 py-3 text-xs text-emerald-300 font-medium">
+                {success}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs text-slate-500 mb-1.5 font-bold uppercase tracking-wider">Confirm Password</label>
+                <label htmlFor="username" className="block text-xs text-slate-400 font-medium mb-1.5">Username</label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Lock className="w-4 h-4" />
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                    <User className="w-4 h-4" aria-hidden="true" />
                   </span>
                   <input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    autoFocus
+                    autoComplete="username"
+                    placeholder="Enter your username"
+                    className="w-full bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 rounded-md px-3 py-2 pl-10 text-sm font-ui transition-all duration-150 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-xs text-slate-400 font-medium mb-1.5">Password</label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                    <Lock className="w-4 h-4" aria-hidden="true" />
+                  </span>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete={isSignup ? "new-password" : "current-password"}
+                    placeholder="Enter your password"
+                    className="w-full bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 rounded-md px-3 py-2 pl-10 text-sm font-ui transition-all duration-150 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              {isSignup && (
+                <div>
+                  <label htmlFor="confirmPassword" className="block text-xs text-slate-400 font-medium mb-1.5">Confirm Password</label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                      <Lock className="w-4 h-4" aria-hidden="true" />
+                    </span>
+                  <input
+                    id="confirmPassword"
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
-                    placeholder="••••••••"
-                    className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-650 focus:ring-1 focus:ring-indigo-500/30 transition-all duration-200"
+                    autoComplete="new-password"
+                    placeholder="Confirm your password"
+                    className="w-full bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 rounded-md px-3 py-2 pl-10 text-sm font-ui transition-all duration-150 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   />
+                  </div>
                 </div>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-850 disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-all duration-200 flex items-center justify-center gap-2 mt-4 shadow-lg shadow-indigo-650/15"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Processing request...</span>
-                </>
-              ) : (
-                isSignup ? 'Create Account' : 'Authenticate'
               )}
-            </button>
-          </form>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full inline-flex items-center justify-center gap-1.5 text-sm font-semibold rounded-md px-4 py-2.5 transition-all duration-150 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border-0 shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  isSignup ? 'Create Account' : 'Sign In'
+                )}
+              </button>
+            </form>
+          </div>
         </div>
 
-        <p className="text-center text-xs text-slate-500 mt-8 font-medium">
-          CodeArmor Security Console · v1.0.0
+        <p className="text-center text-xs text-slate-500 mt-6">
+          CodeArmor v1.0.0
         </p>
       </div>
     </div>

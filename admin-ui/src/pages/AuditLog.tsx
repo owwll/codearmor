@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { api, AuditEntry, ScanRecord } from '../api/client';
-import { ScrollText, Filter, Calendar, ShieldCheck } from 'lucide-react';
+import { ScrollText, Filter, Calendar, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 const EVENT_COLORS: Record<string, string> = {
-  SCAN_START:       'bg-sky-100    text-sky-700      border-sky-200',
-  PLAN_CREATED:     'bg-purple-100 text-purple-700   border-purple-200',
-  AGENT_DELEGATED:  'bg-blue-100   text-blue-700     border-blue-200',
-  FINDING_ADDED:    'bg-amber-100  text-amber-700    border-amber-200',
-  FINDING_VALIDATED:'bg-emerald-100 text-emerald-700 border-emerald-200',
-  SCAN_COMPLETE:    'bg-emerald-100 text-emerald-700 border-emerald-200',
-  SCAN_FAILED:      'bg-rose-100   text-rose-700     border-rose-200',
+  SCAN_START: 'badge-info',
+  PLAN_CREATED: 'badge-info',
+  AGENT_DELEGATED: 'badge-info',
+  FINDING_ADDED: 'badge-warning',
+  FINDING_VALIDATED: 'badge-success',
+  SCAN_COMPLETE: 'badge-success',
+  SCAN_FAILED: 'badge-critical',
 };
 
 function evtBadge(type: string) {
-  return EVENT_COLORS[type] ?? 'bg-slate-100 text-slate-700 border-slate-200';
+  return EVENT_COLORS[type] ?? 'text-slate-400 bg-slate-100';
 }
 
 function fmtTs(ts?: string): string {
@@ -21,11 +21,27 @@ function fmtTs(ts?: string): string {
   try { return new Date(ts).toLocaleString(); } catch { return ts; }
 }
 
+function AuditLogSkeleton() {
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="h-7 w-28 bg-slate-200 rounded-md" />
+          <div className="h-4 w-56 bg-slate-100 rounded-md" />
+        </div>
+        <div className="h-9 w-44 bg-slate-100 rounded-md" />
+      </div>
+      <div className="h-[400px] bg-slate-100 rounded-md" />
+    </div>
+  );
+}
+
 export default function AuditLog() {
   const [entries, setEntries] = useState<AuditEntry[]>([]);
-  const [scans, setScans]     = useState<ScanRecord[]>([]);
+  const [scans, setScans] = useState<ScanRecord[]>([]);
   const [scanFilter, setScanFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     api.getScans(1, 100).then(({ scans: s }) => setScans(s)).catch(() => {});
@@ -33,99 +49,92 @@ export default function AuditLog() {
 
   useEffect(() => {
     setLoading(true);
+    setError('');
     api.getAuditLog(scanFilter || undefined)
       .then(setEntries)
+      .catch(() => setError('Failed to load audit log.'))
       .finally(() => setLoading(false));
   }, [scanFilter]);
 
+  if (loading) return <AuditLogSkeleton />;
+
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 select-none bg-[#F8FAFC]">
-      {/* Header */}
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-fadeIn">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">Audit Trail</h1>
-          <p className="text-sm text-slate-500">Tamper-evident log registry validating the compliance verification execution sequence.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Audit Log</h1>
+          <p className="text-sm text-slate-500 mt-1">{error ? 'Could not load events.' : `${entries.length} event${entries.length !== 1 ? 's' : ''} recorded.`}</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-450">
-              <Filter className="w-3.5 h-3.5" />
-            </span>
-            <select
-              value={scanFilter}
-              onChange={(e) => setScanFilter(e.target.value)}
-              className="bg-white border border-slate-300 rounded-xl pl-9 pr-8 py-2.5 text-xs font-bold text-slate-700 focus:outline-none focus:border-indigo-650 focus:ring-1 focus:ring-indigo-500/30 transition-all cursor-pointer appearance-none shadow-sm"
-            >
-              <option value="">All Verification Logs</option>
-              {scans.map((s) => (
-                <option key={s.id} value={s.id}>{s.projectName} ({s.id.slice(0, 8)})</option>
-              ))}
-            </select>
-          </div>
+        <div className="relative">
+          <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <Filter className="w-3.5 h-3.5" aria-hidden="true" />
+          </span>
+          <select
+            value={scanFilter}
+            onChange={(e) => setScanFilter(e.target.value)}
+            className="input pl-9 pr-8 py-2 text-xs cursor-pointer appearance-none"
+            aria-label="Filter by scan"
+          >
+            <option value="">All events</option>
+            {scans.map((s) => (
+              <option key={s.id} value={s.id}>{s.projectName} ({s.id.slice(0, 8)})</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Table Card */}
-      <div className="glass-card overflow-hidden">
-        {loading ? (
-          <div className="py-24 flex flex-col items-center justify-center gap-3">
-            <span className="text-2xl animate-spin text-indigo-650">🛡️</span>
-            <p className="text-xs text-slate-500">Retrieving audit trace events...</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="cyber-table">
-              <thead>
-                <tr>
-                  {['Timestamp', 'Event Type', 'Responsible Agent', 'Action Executed', 'Target Element', 'CodeArmor Block ID'].map((h) => (
-                    <th key={h} className="text-left">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {entries.length === 0 && (
+      {error ? (
+        <div className="card p-8 text-center">
+          <ShieldAlert className="w-10 h-10 mx-auto mb-3 text-armor-critical" aria-hidden="true" />
+          <p className="text-sm font-medium text-slate-700 mb-3">{error}</p>
+          <button onClick={() => window.location.reload()} className="btn btn-primary btn-sm">Retry</button>
+        </div>
+      ) : (
+        <div className="card overflow-hidden">
+          {entries.length === 0 ? (
+            <div className="py-16 text-center text-slate-400">
+              <ScrollText className="w-10 h-10 mx-auto mb-3 text-slate-300" aria-hidden="true" />
+              <p className="text-sm font-medium">No audit events recorded.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="data-table">
+                <thead>
                   <tr>
-                    <td colSpan={6} className="text-center py-16 text-slate-500 bg-white">
-                      <ScrollText className="w-10 h-10 mx-auto mb-3 text-slate-450" />
-                      <p className="text-sm font-semibold">No audit logs recorded</p>
-                    </td>
+                    {['Timestamp', 'Event', 'Agent', 'Action', 'Target', 'Plan ID'].map((h) => (
+                      <th key={h}>{h}</th>
+                    ))}
                   </tr>
-                )}
-                {entries.map((e) => (
-                  <tr key={e.id}>
-                    <td>
-                      <div className="flex items-center gap-1.5 text-slate-500 text-xs">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{fmtTs(e.createdAt)}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`inline-flex items-center gap-1.5 text-xs border rounded-lg px-2.5 py-1 font-bold uppercase ${evtBadge(e.eventType)}`}>
-                        {e.eventType}
-                      </span>
-                    </td>
-                    <td className="text-slate-700 font-bold text-xs font-mono">{e.agentName ?? 'system'}</td>
-                    <td className="text-slate-800 text-sm max-w-[280px] truncate" title={e.action}>{e.action}</td>
-                    <td className="text-slate-500 text-xs font-mono max-w-[180px] truncate" title={e.target}>{e.target ?? '—'}</td>
-                    <td>
-                      {e.armorIqPlanId ? (
-                        <span className="inline-flex items-center gap-1 bg-[#EEF2FF] border border-indigo-200 text-indigo-700 text-xs rounded-lg px-2 py-1 font-mono font-bold">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>{String(e.armorIqPlanId).slice(0, 10)}</span>
-                        </span>
-                      ) : <span className="text-slate-400 text-xs font-mono">—</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <p className="text-xs text-slate-500 text-center font-medium">
-        Verified logs display <span className="text-slate-900">{entries.length}</span> compliance trace events. Cryptographic verification keys are generated automatically.
-      </p>
+                </thead>
+                <tbody>
+                  {entries.map((e) => (
+                    <tr key={e.id}>
+                      <td>
+                        <div className="flex items-center gap-1.5 text-slate-400 text-xs">
+                          <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>{fmtTs(e.createdAt)}</span>
+                        </div>
+                      </td>
+                      <td><span className={`badge ${evtBadge(e.eventType)}`}>{e.eventType}</span></td>
+                      <td className="text-slate-600 font-medium text-xs font-mono">{e.agentName ?? 'system'}</td>
+                      <td className="text-slate-700 text-sm max-w-[280px] truncate" title={e.action}>{e.action}</td>
+                      <td className="text-slate-400 text-xs font-mono max-w-[180px] truncate" title={e.target}>{e.target ?? '—'}</td>
+                      <td>
+                        {e.armorIqPlanId ? (
+                          <span className="badge badge-info">
+                            <ShieldCheck className="w-3 h-3" aria-hidden="true" />
+                            <span>{String(e.armorIqPlanId).slice(0, 10)}</span>
+                          </span>
+                        ) : <span className="text-slate-300 text-xs font-mono">—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

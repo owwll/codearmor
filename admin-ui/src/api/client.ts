@@ -24,12 +24,30 @@ export interface ScanRecord {
   armorIqPlanId?: string;
 }
 
-export interface ScanResult extends ScanRecord {
-  findings:      any[];
-  agentStatuses: any[];
-  projectName?:  string;
-  projectPath?:  string;
-  startedAt?:    string;
+export interface Finding {
+  id:          string;
+  severity:    'CRITICAL' | 'WARNING' | 'INFO';
+  title:       string;
+  description: string;
+  file:        string;
+  line:        number;
+  category:    string;
+  impact?:     string;
+  fix?:        string;
+  codeSnippet?: string;
+}
+
+export interface AgentStatus {
+  agentId:       string;
+  agentName:     string;
+  status:        string;
+  findingsCount?: number;
+}
+
+export interface ScanResult extends Omit<ScanRecord, 'startedAt'> {
+  findings:      Finding[];
+  agentStatuses: AgentStatus[];
+  startedAt:     string;
   durationMs?:   number;
   summary?: {
     critical: number;

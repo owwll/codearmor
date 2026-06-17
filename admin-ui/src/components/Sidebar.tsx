@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { LayoutDashboard, Shield, ShieldAlert, FolderGit2, ScrollText, Settings, LogOut, Menu, X, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, ShieldAlert, ScrollText, ShieldCheck, FolderGit2, Users, LogOut, Menu, X } from 'lucide-react';
 
 export function Sidebar() {
   const { user, logout } = useAuth();
@@ -15,15 +15,15 @@ export function Sidebar() {
   };
 
   const navLinks = [
-    { to: '/dashboard',  label: 'Dashboard',  icon: LayoutDashboard },
-    { to: '/scans',      label: 'Threats',    icon: ShieldAlert },
-    { to: '/audit-log',  label: 'Audit Log',  icon: ScrollText },
-    { to: '/armoriq',    label: 'ArmorIQ',    icon: ShieldCheck },
+    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/scans', label: 'Scans', icon: ShieldAlert },
+    { to: '/projects', label: 'Projects', icon: FolderGit2 },
+    { to: '/audit-log', label: 'Audit Log', icon: ScrollText },
+    { to: '/armoriq', label: 'ArmorIQ', icon: ShieldCheck },
   ];
 
-  // Dynamically include User directory as Settings for admins
   if (user?.role === 'admin') {
-    navLinks.push({ to: '/users', label: 'Settings', icon: Settings });
+    navLinks.push({ to: '/users', label: 'Users', icon: Users });
   }
 
   const handleLinkClick = () => {
@@ -32,104 +32,86 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Top Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#111827] flex items-center justify-between px-4 border-b border-slate-800 z-30">
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0F172A] flex items-center justify-between px-4 border-b border-slate-800 z-30">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-500/20">
-            <Shield className="w-4 h-4 text-white" />
+          <div className="w-7 h-7 flex items-center justify-center">
+            <img src="/codearmor.png" alt="" className="w-full h-full object-contain" />
           </div>
-          <div>
-            <h1 className="text-white font-bold text-sm leading-tight tracking-wide font-display">CodeArmor</h1>
-            <p className="text-slate-450 text-[8px] font-semibold tracking-wider uppercase">Security Intelligence</p>
-          </div>
+          <span className="text-white font-semibold text-sm">CodeArmor</span>
         </div>
         <button
           onClick={() => setIsOpen(true)}
-          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 focus:outline-none transition-colors"
+          className="p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
           aria-label="Open navigation menu"
         >
-          <Menu className="w-5.5 h-5.5" />
+          <Menu className="w-5 h-5" aria-hidden="true" />
         </button>
       </header>
 
-      {/* Backdrop for Mobile */}
       {isOpen && (
         <div
           onClick={() => setIsOpen(false)}
-          className="fixed inset-0 bg-black/60 z-30 md:hidden backdrop-blur-xs transition-opacity duration-305"
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
         />
       )}
 
-      {/* Sidebar Drawer */}
       <aside className={`
-        fixed inset-y-0 left-0 z-45 flex flex-col w-[280px] bg-[#111827] select-none
-        transition-transform duration-300 ease-in-out
-        md:translate-x-0 md:static md:h-screen md:min-h-screen md:shrink-0
+        fixed inset-y-0 left-0 z-40 flex flex-col w-60 bg-[#0F172A] select-none
+        transition-transform duration-200 ease-in-out
+        md:translate-x-0 md:static md:min-h-screen md:shrink-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-        {/* Brand Header */}
-        <div className="flex items-center justify-between px-6 py-6 border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Shield className="w-5 h-5 text-white" />
+        <div className="flex items-center justify-between px-5 py-5 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img src="/codearmor.png" alt="CodeArmor" className="w-full h-full object-contain" />
             </div>
-            <div>
-              <h1 className="text-white font-bold text-base leading-tight tracking-wide font-display">CodeArmor</h1>
-              <p className="text-slate-400 text-[10px] font-semibold tracking-wider uppercase mt-0.5">Security Intelligence</p>
-            </div>
+            <span className="text-white font-semibold text-base">CodeArmor</span>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 focus:outline-none transition-colors"
+            className="md:hidden p-1.5 rounded-md text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
             aria-label="Close navigation menu"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 py-6 px-4 space-y-1.5 overflow-y-auto">
+        <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
           {navLinks.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               onClick={handleLinkClick}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                `flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/15'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                    ? 'bg-armor-primary text-white'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
                 }`
               }
             >
-              {({ isActive }) => (
-                <>
-                  <Icon className={`w-4 h-4 transition-colors duration-200 ${
-                    isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'
-                  }`} />
-                  <span>{label}</span>
-                </>
-              )}
+              <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        {/* User Session Footer */}
-        <div className="border-t border-slate-800 p-5 bg-[#0e1420]">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500 flex items-center justify-center text-white text-sm font-bold shadow-md shadow-indigo-500/10 shrink-0">
+        <div className="border-t border-slate-800 p-4">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-8 h-8 rounded-md bg-armor-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
               {user?.username?.[0]?.toUpperCase() ?? 'U'}
             </div>
             <div className="overflow-hidden">
-              <p className="text-slate-200 text-xs font-semibold truncate leading-tight">{user?.username ?? 'User'}</p>
-              <p className="text-slate-500 text-[9px] uppercase font-bold tracking-wider mt-0.5">{user?.role ?? 'User'}</p>
+              <p className="text-slate-200 text-xs font-medium truncate leading-tight">{user?.username ?? 'User'}</p>
+              <p className="text-slate-500 text-[10px] font-medium uppercase tracking-wider mt-0.5">{user?.role ?? 'User'}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-rose-400 transition-all py-2.5 px-3 rounded-lg border border-transparent hover:border-rose-500/25 hover:bg-rose-500/5 font-medium"
+            className="w-full flex items-center justify-center gap-2 text-xs text-slate-400 hover:text-red-400 transition-colors py-2 px-3 rounded-md hover:bg-slate-800/60"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Sign out</span>
           </button>
         </div>

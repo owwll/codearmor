@@ -76,7 +76,7 @@ export default function App() {
   if (!auth.checked) {
     return (
       <div style={{ ...pageStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', gap: '12px' }}>
-        <div style={{ fontSize: '32px', animation: 'pulse 1.5s infinite' }}>🛡️</div>
+        <img src={(window as any).__LOGO_URI__} alt="CodeArmor" style={{ width: '32px', height: '32px', animation: 'pulse 1.5s infinite' }} />
         <p style={{ opacity: 0.5, fontSize: '12px' }}>Connecting to secure vault...</p>
       </div>
     );
@@ -98,7 +98,7 @@ export default function App() {
           marginBottom: '24px',
           boxShadow: '0 0 24px rgba(0, 245, 255, 0.15)'
         }}>
-          <span style={{ fontSize: '40px' }}>🛡️</span>
+          <img src={(window as any).__LOGO_URI__} alt="CodeArmor" style={{ width: '40px', height: '40px' }} />
         </div>
         <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 8px 0', letterSpacing: '-0.3px', color: '#f8fafc' }}>
           CodeArmor Security
@@ -152,7 +152,7 @@ export default function App() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '20px' }}>🛡️</span>
+            <img src={(window as any).__LOGO_URI__} alt="CodeArmor" style={{ width: '20px', height: '20px' }} />
             <span style={{ fontWeight: 700, fontSize: '14px' }}>CodeArmor</span>
             <span style={{
               fontSize: '10px',
@@ -193,7 +193,7 @@ export default function App() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '24px' }}>🛡️</span>
+          <img src={(window as any).__LOGO_URI__} alt="CodeArmor" style={{ width: '24px', height: '24px' }} />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <h1 style={{ fontSize: '15px', fontWeight: 700, margin: 0 }}>CodeArmor</h1>

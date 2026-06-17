@@ -4,6 +4,7 @@
   "description": "Automatically scan your codebase for 40+ security vulnerability types using 11 parallel AI agents",
   "version": "1.0.0",
   "publisher": "codearmor",
+  "icon": "codearmor.png",
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Linters", "Other"],
   "activationEvents": ["onStartupFinished"],

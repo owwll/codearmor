@@ -162,9 +162,14 @@ export class PanelManager {
       vscode.Uri.joinPath(distPath, 'bundle.js')
     );
 
+    const logoUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this.context.extensionUri, 'codearmor.png')
+    );
+
     html = html
       .replace(/__CSP_NONCE__/g,  nonce)
-      .replace(/__SCRIPT_URI__/g, scriptUri.toString());
+      .replace(/__SCRIPT_URI__/g, scriptUri.toString())
+      .replace(/__LOGO_URI__/g, logoUri.toString());
 
     return html;
   }

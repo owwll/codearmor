@@ -4,6 +4,7 @@ import * as os from 'os';
 import { logger } from './logger';
 
 export interface LocalSession {
+  token?: string;
   user: {
     id: string;
     username: string;

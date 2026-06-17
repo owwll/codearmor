@@ -19,8 +19,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#F8FAFC] text-slate-450">
-        <span className="text-2xl animate-spin">🛡️</span>
+      <div className="flex items-center justify-center h-screen text-slate-400">
+        <img src="/codearmor.png" alt="" className="w-8 h-8 animate-spin" />
       </div>
     );
   }
@@ -31,14 +31,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 // ── RootLayout incorporating Sidebar & Outlet ────────────────────────────────
 function RootLayout() {
   return (
-    <div className="flex h-screen bg-[#F8FAFC] text-slate-900 overflow-hidden">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar />
-      <main className="flex-1 h-full overflow-y-auto pt-16 md:pt-0">
+      <main className="flex-1 h-full overflow-y-auto pt-14 md:pt-0">
         <Suspense fallback={
-          <div className="flex items-center justify-center h-screen text-gray-500">
+          <div className="flex items-center justify-center h-screen text-slate-400">
             <div className="text-center">
-              <span className="text-2xl animate-pulse">🛡️</span>
-              <p className="text-xs opacity-50 mt-2">Loading panel...</p>
+              <img src="/codearmor.png" alt="" className="w-8 h-8 mx-auto animate-pulse" />
+              <p className="text-xs mt-2">Loading...</p>
             </div>
           </div>
         }>
@@ -55,8 +55,8 @@ const router = createBrowserRouter([
     path: '/login',
     element: (
       <Suspense fallback={
-        <div className="flex items-center justify-center h-screen bg-[#040811] text-gray-500">
-          <span className="text-2xl animate-pulse">🛡️</span>
+        <div className="flex items-center justify-center h-screen bg-slate-900">
+          <img src="/codearmor.png" alt="" className="w-8 h-8 animate-pulse" />
         </div>
       }>
         <Login />

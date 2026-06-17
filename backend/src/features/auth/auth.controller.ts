@@ -135,6 +135,7 @@ export async function status(_req: Request, res: Response): Promise<void> {
 
     res.json({
       authenticated: true,
+      token: session.token,
       user: {
         id: user.id,
         username: user.username,
@@ -181,6 +182,7 @@ export async function callback(req: Request, res: Response): Promise<void> {
     }
 
     saveSession({
+      token,
       user: {
         id: user.id,
         username: user.username,

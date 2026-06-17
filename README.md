@@ -1,4 +1,7 @@
-# CodeArmor — AI-Powered Security Scanner for VS Code
+<div align="center">
+  <img src="codearmor.png" alt="CodeArmor Logo" width="128" />
+  <h1>CodeArmor — AI-Powered Security Scanner for VS Code</h1>
+</div>
 
 CodeArmor is a premium security tool that automatically scans your codebase for security vulnerabilities.
 

@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'nonce-__CSP_NONCE__'; style-src 'unsafe-inline';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src vscode-webview-resource: https: data:; script-src 'nonce-__CSP_NONCE__'; style-src 'unsafe-inline';">
+  <script nonce="__CSP_NONCE__">window.__LOGO_URI__ = "__LOGO_URI__";</script>
   <title>CodeArmor</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }

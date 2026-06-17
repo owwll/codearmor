@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Activity, Calendar, ShieldAlert } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, ShieldAlert, Search, ArrowUpRight } from 'lucide-react';
 import { api, ScanRecord } from '../api/client';
 
 function scoreBadge(score: number) {
-  if (score >= 80) return 'bg-[#22C55E]/10 border-[#22C55E]/20 text-[#22C55E]';
-  if (score >= 50) return 'bg-[#F59E0B]/10 border-[#F59E0B]/20 text-[#F59E0B]';
-  return                  'bg-[#EF4444]/10 border-[#EF4444]/20 text-[#EF4444]';
+  if (score >= 80) return 'badge-success';
+  if (score >= 50) return 'badge-warning';
+  return 'badge-critical';
 }
 
 function fmtDuration(ms?: number): string {
@@ -17,129 +17,189 @@ function fmtDuration(ms?: number): string {
 
 const PAGE_SIZE = 15;
 
+function ScansSkeleton() {
+  return (
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="h-7 w-24 bg-slate-200 rounded-md" />
+          <div className="h-4 w-64 bg-slate-100 rounded-md" />
+        </div>
+        <div className="h-9 w-48 bg-slate-100 rounded-md" />
+      </div>
+      <div className="h-[400px] bg-slate-100 rounded-md" />
+    </div>
+  );
+}
+
 export default function Scans() {
-  const [scans, setScans]   = useState<ScanRecord[]>([]);
-  const [total, setTotal]   = useState(0);
-  const [page, setPage]     = useState(1);
+  const [scans, setScans] = useState<ScanRecord[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     setLoading(true);
+    setError('');
     api.getScans(page, PAGE_SIZE)
       .then(({ scans: s, total: t }) => { setScans(s); setTotal(t); })
+      .catch(() => setError('Failed to load scans.'))
       .finally(() => setLoading(false));
   }, [page]);
 
+  const filtered = useMemo(() => {
+    if (!search.trim()) return scans;
+    const q = search.toLowerCase();
+    return scans.filter((s) => s.projectName.toLowerCase().includes(q));
+  }, [search, scans]);
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  if (loading) return <ScansSkeleton />;
+
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 select-none bg-[#F8FAFC]">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">Threat Logs</h1>
-          <p className="text-sm text-slate-500">History of all vulnerability inspections performed across active workspaces.</p>
+          <h1 className="text-2xl font-bold text-slate-900">Scans</h1>
+          <p className="text-sm text-slate-500 mt-1">{total} scan{total !== 1 ? 's' : ''} completed across all projects.</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl px-4 py-2 flex items-center gap-2 shadow-sm">
-          <Activity className="w-4 h-4 text-indigo-600" />
-          <span className="text-xs font-bold text-slate-650">
-            <span className="text-slate-900 font-mono font-extrabold">{total}</span> Scans Completed
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <Search className="w-3.5 h-3.5" aria-hidden="true" />
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by project..."
+              className="input pl-9 py-2 text-xs w-56"
+              aria-label="Search scans by project name"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Table Card */}
-      <div className="glass-card overflow-hidden">
-        {loading ? (
-          <div className="py-24 flex flex-col items-center justify-center gap-3">
-            <span className="text-2xl animate-spin text-indigo-650">🛡️</span>
-            <p className="text-xs text-slate-500">Retrieving scan execution list...</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="cyber-table">
-              <thead>
-                <tr>
-                  {['Project / Path', 'Security Score', 'Critical', 'Warning', 'Info', 'Duration', 'Date', 'Status', ''].map((h) => (
-                    <th key={h} className="text-left">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {scans.length === 0 && (
+      {/* Error state */}
+      {error && (
+        <div className="card p-8 text-center">
+          <ShieldAlert className="w-10 h-10 mx-auto mb-3 text-armor-critical" aria-hidden="true" />
+          <p className="text-sm font-medium text-slate-700 mb-3">{error}</p>
+          <button onClick={() => window.location.reload()} className="btn btn-primary btn-sm">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Table card */}
+      {!error && (
+        <div className="card overflow-hidden">
+          {filtered.length === 0 && !loading ? (
+            <div className="py-16 text-center text-slate-400">
+              <ShieldAlert className="w-10 h-10 mx-auto mb-3 text-slate-300" aria-hidden="true" />
+              <p className="text-sm font-medium">{search ? 'No scans match your search.' : 'No scans recorded yet.'}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="data-table">
+                <thead>
                   <tr>
-                    <td colSpan={9} className="text-center py-16 text-slate-500 bg-white">
-                      <ShieldAlert className="w-10 h-10 mx-auto mb-3 text-slate-400" />
-                      <p className="text-sm font-semibold">No scans found</p>
-                    </td>
+                    {['Project', 'Score', 'Critical', 'Warning', 'Info', 'Duration', 'Date', 'Status', ''].map((h) => (
+                      <th key={h}>{h}</th>
+                    ))}
                   </tr>
-                )}
-                {scans.map((s) => (
-                  <tr key={s.id}>
-                    <td>
-                      <p className="text-slate-900 font-bold text-sm truncate max-w-[200px]">{s.projectName}</p>
-                      <p className="text-slate-450 text-xs truncate max-w-[240px] font-mono mt-0.5">{s.projectPath}</p>
-                    </td>
-                    <td>
-                      <span className={`text-xs border rounded-full px-2.5 py-0.5 font-bold ${scoreBadge(s.score)}`}>
-                        {s.score}
-                      </span>
-                    </td>
-                    <td className="text-[#EF4444] font-bold text-sm">{s.criticalCount ?? 0}</td>
-                    <td className="text-[#F59E0B] font-bold text-sm">{s.warningCount ?? 0}</td>
-                    <td className="text-sky-600 font-bold text-sm">{s.infoCount ?? 0}</td>
-                    <td className="text-slate-500 text-xs font-mono">{fmtDuration(s.durationMs)}</td>
-                    <td>
-                      <div className="flex items-center gap-1.5 text-slate-500 text-xs">
-                        <Calendar className="w-3.5 h-3.5 text-slate-450" />
-                        <span>{new Date(s.startedAt).toLocaleDateString()}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold uppercase ${
-                        s.status === 'complete' 
-                          ? 'bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/20' 
-                          : s.status === 'failed' 
-                          ? 'bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/20' 
-                          : 'bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20'
-                      }`}>
-                        {s.status}
-                      </span>
-                    </td>
-                    <td>
-                      <Link 
-                        to={`/scans/${s.id}`} 
-                        className="inline-flex items-center justify-center px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 hover:text-slate-900 rounded-lg border border-slate-200 transition-all"
-                      >
-                        View Report
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                </thead>
+                <tbody>
+                  {filtered.map((s) => (
+                    <tr key={s.id} className="group cursor-pointer" onClick={() => window.location.href = `/scans/${s.id}`}>
+                      <td>
+                        <p className="text-slate-900 font-medium text-sm truncate max-w-[200px]">{s.projectName}</p>
+                        <p className="text-slate-400 text-xs truncate max-w-[240px] font-mono mt-0.5">{s.projectPath}</p>
+                      </td>
+                      <td><span className={`badge ${scoreBadge(s.score)}`}>{s.score}</span></td>
+                      <td className="text-armor-critical font-semibold text-sm">{s.criticalCount ?? 0}</td>
+                      <td className="text-armor-warning font-semibold text-sm">{s.warningCount ?? 0}</td>
+                      <td className="text-armor-info font-semibold text-sm">{s.infoCount ?? 0}</td>
+                      <td className="text-slate-400 text-xs font-mono">{fmtDuration(s.durationMs)}</td>
+                      <td>
+                        <div className="flex items-center gap-1.5 text-slate-400 text-xs">
+                          <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>{new Date(s.startedAt).toLocaleDateString()}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`badge ${s.status === 'complete' ? 'badge-success' : s.status === 'failed' ? 'badge-critical' : 'badge-warning'}`}>
+                          {s.status}
+                        </span>
+                      </td>
+                      <td>
+                        <Link
+                          to={`/scans/${s.id}`}
+                          className="btn btn-secondary px-3 py-1.5 text-xs group-hover:border-slate-300 transition-colors"
+                        >
+                          View <ArrowUpRight className="w-3 h-3" aria-hidden="true" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Pagination */}
-      {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
-          <span className="text-xs text-slate-500 font-semibold">Showing page <span className="text-slate-900">{page}</span> of <span className="text-slate-900">{totalPages}</span></span>
-          <div className="flex gap-2">
+      {!error && !loading && totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-slate-400">Page {page} of {totalPages}</span>
+          <div className="flex items-center gap-1.5">
             <button
               disabled={page === 1}
               onClick={() => setPage((p) => p - 1)}
-              className="p-2 text-xs rounded-xl border border-slate-350 bg-white text-slate-600 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+              className="btn btn-secondary px-2.5 py-2 disabled:opacity-30"
+              aria-label="Previous page"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
             </button>
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let pageNum: number;
+              if (totalPages <= 7) {
+                pageNum = i + 1;
+              } else if (page <= 4) {
+                pageNum = i + 1;
+              } else if (page >= totalPages - 3) {
+                pageNum = totalPages - 6 + i;
+              } else {
+                pageNum = page - 3 + i;
+              }
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setPage(pageNum)}
+                  className={`w-8 h-8 rounded-md text-xs font-medium transition-colors ${
+                    pageNum === page
+                      ? 'bg-armor-primary text-white'
+                      : 'text-slate-500 hover:bg-slate-100'
+                  }`}
+                  aria-label={`Page ${pageNum}`}
+                  aria-current={pageNum === page ? 'page' : undefined}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
             <button
               disabled={page === totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="p-2 text-xs rounded-xl border border-slate-350 bg-white text-slate-600 hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+              className="btn btn-secondary px-2.5 py-2 disabled:opacity-30"
+              aria-label="Next page"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>
