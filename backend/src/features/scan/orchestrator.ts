@@ -55,6 +55,14 @@ export async function orchestrateScan(request: ScanRequest): Promise<ScanResult>
       });
     }
 
+    // ── Step 1b — Ensure project record exists (even if scan fails) ─────────
+    await queries.upsertProject({
+      id:           crypto.randomUUID(),
+      userId:       request.userId || null,
+      projectPath:  request.projectPath,
+      projectName:  request.projectName ?? path.basename(request.projectPath),
+    });
+
     emit(scanId, { phase: 'INITIALIZING', message: 'Reading project structure...' });
 
     // ── Step 2 — Build file map ──────────────────────────────────────────────
@@ -188,15 +196,7 @@ export async function orchestrateScan(request: ScanRequest): Promise<ScanResult>
       armorIqPlanId: planId,
     });
 
-    await queries.upsertProject({
-      id:           crypto.randomUUID(),
-      userId:       request.userId || null,
-      projectPath:  request.projectPath,
-      projectName:  path.basename(request.projectPath),
-      lastScanId:   scanId,
-      lastScore:     score,
-      scanCount:    1,
-    });
+    await queries.finalizeProjectScan(request.projectPath, scanId, score);
 
     // ── Step 10 — Audit completion ────────────────────────────────────────────
     await queries.insertAuditEvent({

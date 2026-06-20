@@ -1,4 +1,14 @@
 import 'dotenv/config';
+
+// ── Suppress verbose SDK console.log noise (Merkle proof logs from @armoriq/sdk) ──
+const _origConsoleLog = console.log;
+console.log = (...args: any[]) => {
+  if (args.some(a => typeof a === 'string' && (a.includes('Merkle proof') || a.includes('CSRG-IAP')))) {
+    return;
+  }
+  _origConsoleLog.apply(console, args);
+};
+
 import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';

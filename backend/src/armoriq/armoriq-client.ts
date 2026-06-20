@@ -41,7 +41,7 @@ function makeMockIntentToken(planId: string): IntentToken {
     signature:        'mock_signature',
     issuedAt:         Math.floor(Date.now() / 1000),
     expiresAt:        Math.floor(Date.now() / 1000) + 3600,
-    policy:           { allowedTools: [] },
+            policy:           { allowedTools: ['read_file', 'call_hf_api'] },
     compositeIdentity:'mock_identity',
     stepProofs:       [],
     totalSteps:       0,
@@ -204,7 +204,7 @@ export class ArmorIQClient {
       const reason  = allowed ? undefined : `Proxy blocked: status=${result.status}`;
       return { allowed, reason };
     } catch (err: any) {
-      logger.warn('ArmorIQ', `invoke failed for ${mcp}/${action} — allowing operation`, err as object);
+      logger.debug('ArmorIQ', `invoke failed for ${mcp}/${action} — allowing operation`, { reason: String(err) });
       return { allowed: true };
     }
   }

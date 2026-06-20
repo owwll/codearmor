@@ -11,7 +11,7 @@ export interface ProjectRecord {
   framework?: string | null;
   lastScanId?: string | null;
   lastScore?: number | null;
-  scanCount: number;
+  scanCount?: number;
   createdAt?: string | null;
   updatedAt?: string | null;
 }
@@ -26,7 +26,7 @@ export async function upsertProject(data: ProjectRecord): Promise<void> {
     framework: data.framework || null,
     lastScanId: data.lastScanId || null,
     lastScore: data.lastScore ?? null,
-    scanCount: data.scanCount ?? 1,
+    scanCount: data.scanCount ?? 0,
     createdAt: data.createdAt || new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -40,16 +40,27 @@ export async function upsertProject(data: ProjectRecord): Promise<void> {
           projectName: record.projectName,
           language: record.language,
           framework: record.framework,
-          lastScanId: record.lastScanId,
-          lastScore: record.lastScore,
-          scanCount: sql`${projects.scanCount} + 1`,
-          updatedAt: record.updatedAt
+          updatedAt: record.updatedAt,
         }
       });
   } catch (err) {
-    // If the SQL tag isn't imported, let's just use regular Drizzle custom SQL or read first.
-    // To be safe and clean, let's use sql helper from drizzle-orm.
     logger.error('ProjectQueries', `Failed to upsert project ${data.projectName}`, err);
+    throw err;
+  }
+}
+
+export async function finalizeProjectScan(projectPath: string, scanId: string, score: number): Promise<void> {
+  try {
+    await db.update(projects)
+      .set({
+        lastScanId: scanId,
+        lastScore: score,
+        scanCount: sql`${projects.scanCount} + 1`,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(projects.projectPath, projectPath));
+  } catch (err) {
+    logger.error('ProjectQueries', `Failed to finalize project scan for ${projectPath}`, err);
     throw err;
   }
 }

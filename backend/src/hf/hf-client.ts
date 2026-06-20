@@ -6,6 +6,7 @@ export class HFClient {
   private fallbackModel: string;
   private lastCallTimes: Map<string, number> = new Map();
   private timeoutMs: number;
+  private creditsExhausted = false;
 
   constructor() {
     this.primaryModel = process.env.HF_PRIMARY_MODEL || 'Qwen/Qwen3-Coder-Next:novita';
@@ -50,6 +51,11 @@ export class HFClient {
     
     logger.info('HFClient', `agent=${agentId} file=${filename} tokens_estimated=${tokens}`);
 
+    if (this.creditsExhausted) {
+      logger.warn('HFClient', `Skipping LLM analysis for ${filename} — HF credits exhausted`);
+      return [];
+    }
+
     try {
       return await this.callModelWithRetry(messages, this.primaryModel, agentId);
     } catch (err) {
@@ -90,6 +96,11 @@ export class HFClient {
 
       if (!response.ok) {
         const errorText = await response.text();
+        if (response.status === 402) {
+          this.creditsExhausted = true;
+          logger.error('HFClient', `CREDITS EXHAUSTED: HuggingFace inference credits depleted. Add credits at https://huggingface.co/settings/billing or set HF_PRIMARY_MODEL to a free model.`);
+          throw new Error(`HF Router API HTTP 402: Credits exhausted`);
+        }
         throw new Error(`HF Router API HTTP ${response.status}: ${errorText}`);
       }
 
