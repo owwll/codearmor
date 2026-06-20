@@ -71,6 +71,84 @@ app.use('/api/admin', adminRouter);
 app.use('/api/auth',  authRouter);
 app.use('/api/armoriq', armoriqRouter);
 
+// ── Per-agent metadata endpoints (each agent gets a unique URL) ────────────
+
+const AGENT_REGISTRY: Record<string, { name: string; role: string }> = {
+  'route-analyst':    { name: 'Route Analyst',   role: 'Audits API routes and controllers for exposure' },
+  'auth-inspector':   { name: 'Auth Inspector',  role: 'Inspects authentication and authorization flows' },
+  'injection-hunter': { name: 'Injection Hunter',role: 'Detects SQL, command and template injections' },
+  'data-flow-tracer': { name: 'Data Flow Tracer',role: 'Traces sensitive data flows through the app' },
+  'config-auditor':   { name: 'Config Auditor',  role: 'Audits configuration files and secrets exposure' },
+  'xss-scanner':      { name: 'XSS Scanner',     role: 'Finds cross-site scripting vulnerabilities' },
+  'csrf-scanner':     { name: 'CSRF Scanner',    role: 'Detects missing CSRF protection' },
+  'file-security':    { name: 'File Security',   role: 'Checks for insecure file operations' },
+  'api-security':     { name: 'API Security',    role: 'Reviews API key exposure and endpoint security' },
+  'business-logic':   { name: 'Business Logic',  role: 'Identifies logic flaws and race conditions' },
+  'crypto-auditor':   { name: 'Crypto Auditor',  role: 'Audits cryptographic implementations and key usage' },
+};
+
+app.get('/agents/:agentId', (req: Request, res: Response) => {
+  const { agentId } = req.params;
+  const agent = AGENT_REGISTRY[agentId];
+  if (!agent) {
+    return res.status(404).json({ error: 'Agent not found' });
+  }
+  res.json({
+    agentId,
+    agentName: agent.name,
+    name: agent.name,
+    role: agent.role,
+    status: 'active',
+    version: '1.0.0',
+    capabilities: ['read_file', 'call_hf_api'],
+  });
+});
+
+app.post('/agents/:agentId', (req: Request, res: Response) => {
+  const { agentId } = req.params;
+  const agent = AGENT_REGISTRY[agentId];
+  if (!agent) {
+    return res.status(404).json({ error: 'Agent not found' });
+  }
+  res.json({
+    agentId,
+    agentName: agent.name,
+    name: agent.name,
+    role: agent.role,
+    status: 'active',
+    version: '1.0.0',
+  });
+});
+
+// ── MCP tools listing endpoint for platform security scan ────────────────────
+
+const MCP_TOOLS = [
+  {
+    name: 'read_file',
+    description: 'Read a file from the scanned project directory with ArmorIQ policy enforcement',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        filePath: { type: 'string', description: 'Relative path to the file' },
+        agentId:  { type: 'string', description: 'Agent identifier requesting the read' },
+      },
+      required: ['filePath'],
+    },
+  },
+];
+
+app.get('/tools', (_req: Request, res: Response) => {
+  res.json({ tools: MCP_TOOLS });
+});
+
+app.post('/tools/list', (_req: Request, res: Response) => {
+  res.json({ tools: MCP_TOOLS });
+});
+
+app.get('/tools/list', (_req: Request, res: Response) => {
+  res.json({ tools: MCP_TOOLS });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Health & diagnostics
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,10 +177,24 @@ app.post('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', service: 'codearmor-orchestrator' });
 });
 app.get('/', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', service: 'codearmor-orchestrator' });
+  res.json({
+    status: 'ok',
+    service: 'codearmor-mcp',
+    version: '1.0.0',
+    organization: 'CodeArmor',
+    tools: MCP_TOOLS.map(t => t.name),
+    agents: Object.keys(AGENT_REGISTRY),
+  });
 });
 app.post('/', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', service: 'codearmor-orchestrator' });
+  res.json({
+    status: 'ok',
+    service: 'codearmor-mcp',
+    version: '1.0.0',
+    organization: 'CodeArmor',
+    tools: MCP_TOOLS.map(t => t.name),
+    agents: Object.keys(AGENT_REGISTRY),
+  });
 });
 app.post('/docs', (_req: Request, res: Response) => {
   res.json({ status: 'ok', service: 'codearmor-orchestrator' });

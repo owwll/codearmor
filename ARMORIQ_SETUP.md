@@ -64,11 +64,12 @@ Click **Start Onboarding** → Wait for these stages to complete:
 
 Open **Agents → Register Agent**
 
-Fill the form **11 times**, once per agent. All fields are the same except **Agent Name** and **Description**:
+**Important**: The ArmorIQ platform requires each agent to have a **unique Agent URL**. Each agent uses the same base ngrok URL but with its own path segment (`/agents/{agent-id}`). The backend exposes per-agent metadata endpoints for this purpose.
 
-| Field | Value (same for all agents) |
+Fill the form **11 times**, once per agent:
+
+| Field | Value |
 |---|---|
-| **Agent URL** | `https://abc123.ngrok.io` (your ngrok URL) |
 | **Version** | `1.0.0` |
 | **Environment** | Production |
 | **Authentication → Credentials provided by** | `Client SDK / Agent (default)` |
@@ -82,6 +83,7 @@ Fill the form **11 times**, once per agent. All fields are the same except **Age
 | Field | Value |
 |---|---|
 | **Agent Name** | `route-analyst` |
+| **Agent URL** | `https://abc123.ngrok.io/agents/route-analyst` |
 | **Description** | `Audits API routes and controllers for exposure` |
 
 ### Agent 2 — Auth Inspector
@@ -89,6 +91,7 @@ Fill the form **11 times**, once per agent. All fields are the same except **Age
 | Field | Value |
 |---|---|
 | **Agent Name** | `auth-inspector` |
+| **Agent URL** | `https://abc123.ngrok.io/agents/auth-inspector` |
 | **Description** | `Inspects authentication and authorization flows` |
 
 ### Agent 3 — Injection Hunter
@@ -96,6 +99,7 @@ Fill the form **11 times**, once per agent. All fields are the same except **Age
 | Field | Value |
 |---|---|
 | **Agent Name** | `injection-hunter` |
+| **Agent URL** | `https://abc123.ngrok.io/agents/injection-hunter` |
 | **Description** | `Detects SQL, command and template injections` |
 
 ### Agent 4 — Data Flow Tracer
@@ -103,6 +107,7 @@ Fill the form **11 times**, once per agent. All fields are the same except **Age
 | Field | Value |
 |---|---|
 | **Agent Name** | `data-flow-tracer` |
+| **Agent URL** | `https://abc123.ngrok.io/agents/data-flow-tracer` |
 | **Description** | `Traces sensitive data flows through the app` |
 
 ### Agent 5 — Config Auditor
@@ -110,6 +115,7 @@ Fill the form **11 times**, once per agent. All fields are the same except **Age
 | Field | Value |
 |---|---|
 | **Agent Name** | `config-auditor` |
+| **Agent URL** | `https://abc123.ngrok.io/agents/config-auditor` |
 | **Description** | `Audits configuration files and secrets exposure` |
 
 ### Agent 6 — XSS Scanner
@@ -117,6 +123,7 @@ Fill the form **11 times**, once per agent. All fields are the same except **Age
 | Field | Value |
 |---|---|
 | **Agent Name** | `xss-scanner` |
+| **Agent URL** | `https://abc123.ngrok.io/agents/xss-scanner` |
 | **Description** | `Finds cross-site scripting vulnerabilities` |
 
 ### Agent 7 — CSRF Scanner
@@ -124,6 +131,7 @@ Fill the form **11 times**, once per agent. All fields are the same except **Age
 | Field | Value |
 |---|---|
 | **Agent Name** | `csrf-scanner` |
+| **Agent URL** | `https://abc123.ngrok.io/agents/csrf-scanner` |
 | **Description** | `Detects missing CSRF protection` |
 
 ### Agent 8 — File Security
@@ -131,6 +139,7 @@ Fill the form **11 times**, once per agent. All fields are the same except **Age
 | Field | Value |
 |---|---|
 | **Agent Name** | `file-security` |
+| **Agent URL** | `https://abc123.ngrok.io/agents/file-security` |
 | **Description** | `Checks for insecure file operations` |
 
 ### Agent 9 — API Security
@@ -138,6 +147,7 @@ Fill the form **11 times**, once per agent. All fields are the same except **Age
 | Field | Value |
 |---|---|
 | **Agent Name** | `api-security` |
+| **Agent URL** | `https://abc123.ngrok.io/agents/api-security` |
 | **Description** | `Reviews API key exposure and endpoint security` |
 
 ### Agent 10 — Business Logic
@@ -145,6 +155,7 @@ Fill the form **11 times**, once per agent. All fields are the same except **Age
 | Field | Value |
 |---|---|
 | **Agent Name** | `business-logic` |
+| **Agent URL** | `https://abc123.ngrok.io/agents/business-logic` |
 | **Description** | `Identifies logic flaws and race conditions` |
 
 ### Agent 11 — Crypto Auditor
@@ -152,10 +163,11 @@ Fill the form **11 times**, once per agent. All fields are the same except **Age
 | Field | Value |
 |---|---|
 | **Agent Name** | `crypto-auditor` |
+| **Agent URL** | `https://abc123.ngrok.io/agents/crypto-auditor` |
 | **Description** | `Audits cryptographic implementations and key usage` |
 
 For each agent:
-1. Fill the form
+1. Fill the form (use the unique Agent URL from the table above)
 2. Click **Start Onboarding**
 3. Wait for Security Scan + Certificate to complete
 4. Move to the next agent
