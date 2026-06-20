@@ -6,8 +6,14 @@ import { logger } from '../utils/logger';
 
 const DEFAULT_AGENTS = 'route-analyst,auth-inspector,injection-hunter,data-flow-tracer,config-auditor,xss-scanner,csrf-scanner,file-security,api-security,business-logic,crypto-auditor';
 
-function getAgentManifest(): string[] {
+function getAgentNames(): string[] {
   const raw = process.env.ARMORIQ_AGENTS || DEFAULT_AGENTS;
+  return raw.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+/** Agent UUIDs from ArmorIQ Platform (used in plan steps for IAP identification) */
+function getAgentUuids(): string[] {
+  const raw = process.env.ARMORIQ_AGENT_IDS || '';
   return raw.split(',').map(s => s.trim()).filter(Boolean);
 }
 
@@ -17,7 +23,13 @@ export async function captureScanPlan(fileMap: FileMap): Promise<IntentToken> {
     .digest('hex')
     .slice(0, 16);
 
-  const agentManifest = getAgentManifest();
+  const agentNames = getAgentNames();
+  const agentUuids = getAgentUuids();
+
+  // Use UUIDs in plan steps when available (same count), fall back to names
+  const usingUuids = agentUuids.length === agentNames.length;
+  const agentManifest = usingUuids ? agentUuids : agentNames;
+  logger.info('ArmorIQ', `Plan agent identifiers: ${usingUuids ? 'UUIDs' : 'names'} (${agentManifest.length} agents)`);
 
   const config: PlanConfig = {
     planType: 'code_security_scan',
