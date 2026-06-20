@@ -14,6 +14,23 @@ const pageStyle: React.CSSProperties = {
   color: 'var(--vscode-editor-foreground, #cccccc)',
 };
 
+const THEME = {
+  primary: '#4F46E5',
+  'primary-hover': '#4338CA',
+  'primary-subtle': 'rgba(79,70,229,0.15)',
+  'primary-border': 'rgba(79,70,229,0.4)',
+  critical: '#DC2626',
+  'critical-subtle': 'rgba(220,38,38,0.15)',
+  'critical-border': 'rgba(220,38,38,0.4)',
+  warning: '#D97706',
+  'warning-subtle': 'rgba(217,119,6,0.15)',
+  'warning-border': 'rgba(217,119,6,0.4)',
+  info: '#0284C7',
+  'info-subtle': 'rgba(2,132,199,0.15)',
+  'info-border': 'rgba(2,132,199,0.4)',
+  success: '#059669',
+};
+
 function Btn({ children, onClick, variant = 'primary' }: {
   children: React.ReactNode;
   onClick: () => void;
@@ -27,14 +44,14 @@ function Btn({ children, onClick, variant = 'primary' }: {
     gap:          '6px',
     padding:      '8px 16px',
     borderRadius: '8px',
-    border:       isPrimary ? '1px solid rgba(0,245,255,0.4)' 
-                  : isDanger ? '1px solid rgba(244,67,54,0.4)'
+    border:       isPrimary ? `1px solid ${THEME['primary-border']}` 
+                  : isDanger ? `1px solid ${THEME['critical-border']}`
                   : '1px solid rgba(255,255,255,0.15)',
-    background:   isPrimary ? 'rgba(0,245,255,0.15)' 
-                  : isDanger ? 'rgba(244,67,54,0.15)'
+    background:   isPrimary ? THEME['primary-subtle'] 
+                  : isDanger ? THEME['critical-subtle']
                   : 'rgba(255,255,255,0.05)',
-    color:        isPrimary ? '#00f5ff' 
-                  : isDanger ? '#f44336'
+    color:        isPrimary ? THEME.primary 
+                  : isDanger ? THEME.critical
                   : 'inherit',
     fontSize:     '12px',
     cursor:       'pointer',
@@ -87,8 +104,8 @@ export default function App() {
     return (
       <div style={{ ...pageStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', textAlign: 'center', padding: '40px 20px' }}>
         <div style={{
-          background: 'rgba(0, 245, 255, 0.03)',
-          border: '1px solid rgba(0, 245, 255, 0.1)',
+          background: THEME['primary-subtle'],
+          border: `1px solid ${THEME['primary-border']}`,
           borderRadius: '50%',
           width: '80px',
           height: '80px',
@@ -96,7 +113,7 @@ export default function App() {
           alignItems: 'center',
           justifyContent: 'center',
           marginBottom: '24px',
-          boxShadow: '0 0 24px rgba(0, 245, 255, 0.15)'
+          boxShadow: `0 0 24px ${THEME['primary-border']}`
         }}>
           <img src={(window as any).__LOGO_URI__} alt="CodeArmor" style={{ width: '40px', height: '40px' }} />
         </div>
@@ -158,8 +175,8 @@ export default function App() {
               fontSize: '10px',
               padding: '2px 6px',
               borderRadius: '4px',
-              background: auth.user.plan === 'pro' ? 'rgba(192,132,252,0.15)' : 'rgba(255,255,255,0.08)',
-              color: auth.user.plan === 'pro' ? '#c084fc' : '#94a3b8',
+              background: auth.user.plan === 'pro' ? 'rgba(129,140,248,0.15)' : 'rgba(255,255,255,0.08)',
+              color: auth.user.plan === 'pro' ? '#818CF8' : '#94a3b8',
               fontWeight: 600,
             }}>{auth.user.plan === 'pro' ? 'PRO' : 'FREE'}</span>
           </div>
@@ -201,8 +218,8 @@ export default function App() {
                 fontSize: '9px',
                 padding: '1px 5px',
                 borderRadius: '3px',
-                background: auth.user.plan === 'pro' ? 'rgba(192,132,252,0.15)' : 'rgba(255,255,255,0.08)',
-                color: auth.user.plan === 'pro' ? '#c084fc' : '#94a3b8',
+                background: auth.user.plan === 'pro' ? 'rgba(129,140,248,0.15)' : 'rgba(255,255,255,0.08)',
+                color: auth.user.plan === 'pro' ? '#818CF8' : '#94a3b8',
                 fontWeight: 600,
               }}>{auth.user.plan === 'pro' ? 'PRO' : 'FREE'}</span>
             </div>
@@ -223,9 +240,9 @@ export default function App() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             {[
-              { label: 'Critical', value: summary.critical, color: '#F44336' },
-              { label: 'Warning',  value: summary.warning,  color: '#FF9800' },
-              { label: 'Info',     value: summary.info,     color: '#2196F3' },
+              { label: 'Critical', value: summary.critical, color: THEME.critical },
+              { label: 'Warning',  value: summary.warning,  color: THEME.warning },
+              { label: 'Info',     value: summary.info,     color: THEME.info },
               { label: 'Total',    value: summary.total,    color: 'inherit' },
             ].map(({ label, value, color }) => (
               <div key={label} style={{ textAlign: 'center' }}>

@@ -2,24 +2,22 @@ import type { IntentToken } from '@armoriq/sdk';
 import { armorIQ } from './armoriq-client';
 import { logger } from '../utils/logger';
 
-/**
- * Checks with ArmorIQ whether an agent has permission to read a specific file
- * before the agent accesses it.
- *
- * Routes through the SDK's armorIQ.invoke() which forwards the request to
- * the ArmorIQ proxy for policy enforcement via the signed IntentToken.
- */
+const MCP_NAME = process.env.ARMORIQ_MCP_NAME || 'codearmor-mcp';
+
 export async function invokeFileRead(
   filePath: string,
   token: IntentToken,
   agentId: string
 ): Promise<boolean> {
   try {
+    const userEmail = token.rawToken?.userEmail as string | undefined;
+
     const result = await armorIQ.invoke(
-      /* mcp    */ 'codearmor-mcp',
-      /* action */ 'read_file',
-      /* token  */ token,
-      /* params */ { filePath, agentId }
+      MCP_NAME,
+      'read_file',
+      token,
+      { filePath, agentId },
+      userEmail
     );
 
     if (!result.allowed) {

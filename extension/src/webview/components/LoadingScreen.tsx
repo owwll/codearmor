@@ -17,11 +17,19 @@ const AGENT_NAMES: Record<string, string> = {
 
 const ALL_AGENT_IDS = Object.keys(AGENT_NAMES);
 
+const THEME = {
+  primary: '#4F46E5',
+  'primary-border': 'rgba(79,70,229,0.4)',
+  success: '#059669',
+  'success-border': 'rgba(5,150,105,0.4)',
+  error: '#DC2626',
+};
+
 function dotColor(status: AgentStatus['status'] | 'waiting'): string {
   switch (status) {
-    case 'running':  return '#00f5ff'; // Neon Cyan
-    case 'complete': return '#10b981'; // Emerald green
-    case 'error':    return '#ef4444'; // Red
+    case 'running':  return THEME.primary;
+    case 'complete': return THEME.success;
+    case 'error':    return THEME.error;
     default:         return 'rgba(255,255,255,0.15)';
   }
 }
@@ -52,11 +60,11 @@ function AgentCard({ agentId, status, findingsCount }: {
     gap:           '10px',
     padding:       '12px',
     borderRadius:  '12px',
-    background:    isRunning ? 'rgba(0, 245, 255, 0.04)' : 'rgba(255,255,255,0.02)',
-    border:        `1px solid ${isRunning ? 'rgba(0,245,255,0.3)' : isComplete ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.06)'}`,
+    background:    isRunning ? 'rgba(79,70,229,0.04)' : 'rgba(255,255,255,0.02)',
+    border:        `1px solid ${isRunning ? 'rgba(79,70,229,0.3)' : isComplete ? 'rgba(5,150,105,0.2)' : 'rgba(255,255,255,0.06)'}`,
     transition:    'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     overflow:      'hidden',
-    boxShadow:     isRunning ? '0 0 16px rgba(0,245,255,0.15)' : 'none',
+    boxShadow:     isRunning ? '0 0 16px rgba(79,70,229,0.15)' : 'none',
   };
 
   const dotStyle: React.CSSProperties = {
@@ -65,7 +73,7 @@ function AgentCard({ agentId, status, findingsCount }: {
     borderRadius: '50%',
     background:   dotColor(status),
     flexShrink:   0,
-    boxShadow:    isRunning ? '0 0 8px #00f5ff' : isComplete ? '0 0 6px #10b981' : 'none',
+    boxShadow:    isRunning ? `0 0 8px ${THEME.primary}` : isComplete ? `0 0 6px ${THEME.success}` : 'none',
   };
 
   return (
@@ -77,7 +85,7 @@ function AgentCard({ agentId, status, findingsCount }: {
           left: 0,
           right: 0,
           height: '2px',
-          background: 'linear-gradient(90deg, transparent, #00f5ff, transparent)',
+          background: `linear-gradient(90deg, transparent, ${THEME.primary}, transparent)`,
           animation: 'scanline 2s linear infinite',
           opacity: 0.7
         }} />
@@ -87,7 +95,7 @@ function AgentCard({ agentId, status, findingsCount }: {
       <span style={{ 
         fontSize: '11px', 
         fontWeight: isRunning ? 600 : 500,
-        color: isRunning ? '#00f5ff' : 'inherit',
+        color: isRunning ? THEME.primary : 'inherit',
         flex: 1, 
         opacity: status === 'waiting' ? 0.4 : 1 
       }}>
@@ -142,27 +150,28 @@ export function LoadingScreen({ agentStatuses }: Props) {
             position: 'absolute',
             width: '100%',
             height: '100%',
-            border: '2px solid rgba(0, 245, 255, 0.2)',
+            border: `2px solid ${THEME['primary-border']}`,
             borderRadius: '50%',
-            animation: 'radar 2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite'
+            animation: 'radar 2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite',
+            opacity: 0.5,
           }} />
           <div style={{
             position: 'absolute',
             width: '80%',
             height: '80%',
-            border: '1px dashed rgba(0, 245, 255, 0.3)',
+            border: '1px dashed rgba(79,70,229,0.3)',
             borderRadius: '50%',
           }} />
           <div style={{
-            background: 'rgba(0, 245, 255, 0.05)',
-            border: '1px solid rgba(0, 245, 255, 0.3)',
+            background: 'rgba(79,70,229,0.05)',
+            border: `1px solid ${THEME['primary-border']}`,
             borderRadius: '50%',
             width: '56px',
             height: '56px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 16px rgba(0, 245, 255, 0.2)'
+            boxShadow: '0 0 16px rgba(79,70,229,0.2)'
           }}>
             <span style={{ fontSize: '26px' }}>🛡️</span>
           </div>
@@ -182,10 +191,10 @@ export function LoadingScreen({ agentStatuses }: Props) {
           <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
             <div style={{
               height:     '100%',
-              background: 'linear-gradient(90deg, #6366f1, #00f5ff)',
+              background: 'linear-gradient(90deg, #4F46E5, #818CF8)',
               width:      `${(completedCount / 11) * 100}%`,
               transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow:  '0 0 8px #00f5ff'
+              boxShadow:  '0 0 8px #4F46E5'
             }} />
           </div>
         </div>

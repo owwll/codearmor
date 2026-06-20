@@ -4,9 +4,9 @@ import { Finding } from '../../types';
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const SEVERITY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  CRITICAL: { bg: 'rgba(244,67,54,0.15)',  text: '#F44336', border: 'rgba(244,67,54,0.4)'  },
-  WARNING:  { bg: 'rgba(255,152,0,0.15)',  text: '#FF9800', border: 'rgba(255,152,0,0.4)'  },
-  INFO:     { bg: 'rgba(33,150,243,0.15)', text: '#2196F3', border: 'rgba(33,150,243,0.4)' },
+  CRITICAL: { bg: 'rgba(220,38,38,0.15)',  text: '#DC2626', border: 'rgba(220,38,38,0.4)'  },
+  WARNING:  { bg: 'rgba(217,119,6,0.15)',  text: '#D97706', border: 'rgba(217,119,6,0.4)'  },
+  INFO:     { bg: 'rgba(2,132,199,0.15)', text: '#0284C7', border: 'rgba(2,132,199,0.4)' },
 };
 
 const AGENT_DISPLAY: Record<string, string> = {

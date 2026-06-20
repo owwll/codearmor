@@ -56,33 +56,27 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(10,90,170,0.12),_transparent_50%),_radial-gradient(ellipse_at_bottom_left,_rgba(79,70,229,0.08),_transparent_50%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiM0ZjQ2ZTUiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(79,70,229,0.08),_transparent_50%),_radial-gradient(ellipse_at_bottom_left,_rgba(79,70,229,0.04),_transparent_50%)] pointer-events-none" />
       <div className="w-full max-w-sm relative">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-lg shadow-blue-500/5">
-            <img src="/codearmor.png" alt="" className="w-10 h-10" />
+          <div className="inline-flex items-center justify-center w-14 h-14 mb-4 mx-auto bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 shadow-lg" style={{ boxShadow: '0 0 24px rgba(79,70,229,0.15)' }}>
+            <img src="/codearmor.png" alt="" className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold text-white">CodeArmor</h1>
           <p className="text-sm text-slate-400 mt-1">Sign in to your account</p>
         </div>
 
-        <div className="bg-slate-800/40 backdrop-blur-xl rounded-lg border border-slate-700/50 shadow-xl shadow-blue-500/5">
-          {/* Tab toggle */}
+        <div className="bg-slate-800/40 backdrop-blur-xl rounded-lg border border-slate-700/50 shadow-xl">
           <div className="flex p-1.5 gap-1 bg-slate-900/50 border-b border-slate-700/50 rounded-t-lg">
             <button
               onClick={() => { setIsSignup(false); setError(''); setSuccess(''); }}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                !isSignup ? 'bg-slate-700/80 text-white shadow-sm border border-slate-600/50' : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${!isSignup ? 'bg-slate-700/80 text-white shadow-sm border border-slate-600/50' : 'text-slate-400 hover:text-slate-200'}`}
             >
               Sign In
             </button>
             <button
               onClick={() => { setIsSignup(true); setError(''); setSuccess(''); }}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                isSignup ? 'bg-slate-700/80 text-white shadow-sm border border-slate-600/50' : 'text-slate-400 hover:text-slate-200'
-              }`}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${isSignup ? 'bg-slate-700/80 text-white shadow-sm border border-slate-600/50' : 'text-slate-400 hover:text-slate-200'}`}
             >
               Register
             </button>
@@ -121,11 +115,9 @@ export default function Login() {
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    required
-                    autoFocus
-                    autoComplete="username"
+                    required autoFocus autoComplete="username"
                     placeholder="Enter your username"
-                    className="w-full bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 rounded-md px-3 py-2 pl-10 text-sm font-ui transition-all duration-150 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 rounded-md px-3 py-2 pl-10 text-sm transition-all duration-150 focus:outline-none focus:border-armor-primary focus:ring-2 focus:ring-armor-primary/20"
                   />
                 </div>
               </div>
@@ -144,7 +136,7 @@ export default function Login() {
                     required
                     autoComplete={isSignup ? "new-password" : "current-password"}
                     placeholder="Enter your password"
-                    className="w-full bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 rounded-md px-3 py-2 pl-10 text-sm font-ui transition-all duration-150 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 rounded-md px-3 py-2 pl-10 text-sm transition-all duration-150 focus:outline-none focus:border-armor-primary focus:ring-2 focus:ring-armor-primary/20"
                   />
                 </div>
               </div>
@@ -156,16 +148,15 @@ export default function Login() {
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
                       <Lock className="w-4 h-4" aria-hidden="true" />
                     </span>
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    autoComplete="new-password"
-                    placeholder="Confirm your password"
-                    className="w-full bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 rounded-md px-3 py-2 pl-10 text-sm font-ui transition-all duration-150 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
+                    <input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required autoComplete="new-password"
+                      placeholder="Confirm your password"
+                      className="w-full bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 rounded-md px-3 py-2 pl-10 text-sm transition-all duration-150 focus:outline-none focus:border-armor-primary focus:ring-2 focus:ring-armor-primary/20"
+                    />
                   </div>
                 </div>
               )}
@@ -173,7 +164,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-1.5 text-sm font-semibold rounded-md px-4 py-2.5 transition-all duration-150 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white border-0 shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full btn btn-primary py-2.5"
               >
                 {loading ? (
                   <>

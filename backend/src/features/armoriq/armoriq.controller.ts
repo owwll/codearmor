@@ -5,19 +5,42 @@ const ARMORCLAW_KEY = process.env.ARMORCLAW_API_KEY || 'mock';
 const HF_KEY        = process.env.HF_API_KEY        || '';
 const HF_MODEL      = process.env.HF_PRIMARY_MODEL  || 'Qwen/Qwen3-Coder-Next:novita';
 
-const AGENT_ROSTER = [
-  { id: 'route-analyst',    name: 'Route Analyst',     role: 'Audits API routes and controllers for exposure' },
-  { id: 'auth-inspector',   name: 'Auth Inspector',    role: 'Inspects authentication and authorization flows' },
-  { id: 'injection-hunter', name: 'Injection Hunter',  role: 'Detects SQL, command and template injections' },
-  { id: 'data-flow-tracer', name: 'Data Flow Tracer',  role: 'Traces sensitive data flows through the app' },
-  { id: 'config-auditor',   name: 'Config Auditor',    role: 'Audits configuration files and secrets exposure' },
-  { id: 'xss-scanner',      name: 'XSS Scanner',       role: 'Finds cross-site scripting vulnerabilities' },
-  { id: 'csrf-scanner',     name: 'CSRF Scanner',      role: 'Detects missing CSRF protection' },
-  { id: 'file-security',    name: 'File Security',     role: 'Checks for insecure file operations' },
-  { id: 'api-security',     name: 'API Security',      role: 'Reviews API key exposure and endpoint security' },
-  { id: 'business-logic',   name: 'Business Logic',    role: 'Identifies logic flaws and race conditions' },
-  { id: 'crypto-auditor',   name: 'Crypto Auditor',    role: 'Audits cryptographic implementations and key usage' },
-];
+const AGENT_NAMES: Record<string, string> = {
+  'route-analyst':    'Route Analyst',
+  'auth-inspector':   'Auth Inspector',
+  'injection-hunter': 'Injection Hunter',
+  'data-flow-tracer': 'Data Flow Tracer',
+  'config-auditor':   'Config Auditor',
+  'xss-scanner':      'XSS Scanner',
+  'csrf-scanner':     'CSRF Scanner',
+  'file-security':    'File Security',
+  'api-security':     'API Security',
+  'business-logic':   'Business Logic',
+  'crypto-auditor':   'Crypto Auditor',
+};
+
+const AGENT_ROLES: Record<string, string> = {
+  'route-analyst':    'Audits API routes and controllers for exposure',
+  'auth-inspector':   'Inspects authentication and authorization flows',
+  'injection-hunter': 'Detects SQL, command and template injections',
+  'data-flow-tracer': 'Traces sensitive data flows through the app',
+  'config-auditor':   'Audits configuration files and secrets exposure',
+  'xss-scanner':      'Finds cross-site scripting vulnerabilities',
+  'csrf-scanner':     'Detects missing CSRF protection',
+  'file-security':    'Checks for insecure file operations',
+  'api-security':     'Reviews API key exposure and endpoint security',
+  'business-logic':   'Identifies logic flaws and race conditions',
+  'crypto-auditor':   'Audits cryptographic implementations and key usage',
+};
+
+function getAgentRoster() {
+  const raw = process.env.ARMORIQ_AGENTS || 'route-analyst,auth-inspector,injection-hunter,data-flow-tracer,config-auditor,xss-scanner,csrf-scanner,file-security,api-security,business-logic,crypto-auditor';
+  return raw.split(',').map(s => s.trim()).filter(Boolean).map(id => ({
+    id,
+    name: AGENT_NAMES[id] || id,
+    role: AGENT_ROLES[id] || 'Security analysis agent',
+  }));
+}
 
 /**
  * GET /api/armoriq/status
@@ -48,7 +71,8 @@ export const getStatus = (_req: Request, res: Response) => {
  * Returns the roster of AI agents, each protected by ArmorIQ + ArmorClaw.
  */
 export const getAgents = (_req: Request, res: Response) => {
-  res.json({ agents: AGENT_ROSTER, total: AGENT_ROSTER.length });
+  const agents = getAgentRoster();
+  res.json({ agents, total: agents.length });
 };
 
 /**

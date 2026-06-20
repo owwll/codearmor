@@ -7,6 +7,7 @@ export interface ScanRequest {
   projectPath: string;
   projectName?: string;
   userId?: string;
+  userEmail?: string;   // Passed to ArmorIQ SDK for user-scoped policy enforcement
 }
 
 export interface AgentStatus {

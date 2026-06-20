@@ -97,7 +97,7 @@ export async function orchestrateScan(request: ScanRequest): Promise<ScanResult>
     // delegateToAgents() broadcasts the IntentToken to all 11 agents.
     // The SDK model embeds per-step Merkle proofs in the token; the proxy
     // enforces per-agent policy centrally on each invoke() call.
-    const agentTokens = await delegateToAgents(intentToken, fileMap);
+    const agentTokens = await delegateToAgents(intentToken, fileMap, request.userEmail);
     await queries.insertAuditEvent({
       id:            crypto.randomUUID(),
       scanId,

@@ -54,10 +54,12 @@ function makeMockIntentToken(planId: string): IntentToken {
 export class ArmorIQClient {
   private sdkClient: SdkClient | null;
   private isMockMode: boolean;
+  private currentUserEmail: string | null;
 
   constructor() {
     const apiKey = process.env.ARMORIQ_API_KEY || 'mock';
     this.isMockMode = apiKey === 'mock';
+    this.currentUserEmail = null;
 
     if (this.isMockMode) {
       this.sdkClient = null;
@@ -76,6 +78,11 @@ export class ArmorIQClient {
       this.sdkClient = null;
       this.isMockMode = true;
     }
+  }
+
+  forUser(userEmail: string): this {
+    this.currentUserEmail = userEmail;
+    return this;
   }
 
   // ── capturePlan ────────────────────────────────────────────────────────────
@@ -148,6 +155,25 @@ export class ArmorIQClient {
     }
   }
 
+  // ── verifyIntent ───────────────────────────────────────────────────────────
+  // Strict intent verification used as a pre-scan authorization gate.
+  // Unlike getIntentToken(), this does NOT fall back to mock on failure —
+  // it propagates errors so the caller can deny the action.
+
+  async verifyIntent(planCapture: PlanCapture): Promise<{ allowed: boolean; reason?: string }> {
+    if (this.isMockMode || !this.sdkClient) {
+      return { allowed: true };
+    }
+
+    try {
+      await this.sdkClient.getIntentToken(planCapture);
+      return { allowed: true };
+    } catch (err: any) {
+      logger.warn('ArmorIQ', 'verifyIntent failed — blocking action', err as object);
+      return { allowed: false, reason: err.message || 'Intent verification failed' };
+    }
+  }
+
   // ── invoke ─────────────────────────────────────────────────────────────────
   // Routes the tool call through the ArmorIQ proxy for policy enforcement.
 
@@ -155,26 +181,29 @@ export class ArmorIQClient {
     mcp: string,
     action: string,
     intentToken: IntentToken,
-    params?: Record<string, any>
+    params?: Record<string, any>,
+    userEmail?: string
   ): Promise<{ allowed: boolean; reason?: string }> {
     if (this.isMockMode || !this.sdkClient) {
-      // In mock mode: always allow (consistent with previous behaviour)
       return { allowed: true };
     }
+
+    const email = userEmail || this.currentUserEmail || undefined;
 
     try {
       const result: MCPInvocationResult = await this.sdkClient.invoke(
         mcp,
         action,
         intentToken,
-        params
+        params,
+        undefined,
+        email
       );
 
       const allowed = result.status !== 'blocked' && result.verified !== false;
       const reason  = allowed ? undefined : `Proxy blocked: status=${result.status}`;
       return { allowed, reason };
     } catch (err: any) {
-      // On network error, fail-open (same as previous behaviour)
       logger.warn('ArmorIQ', `invoke failed for ${mcp}/${action} — allowing operation`, err as object);
       return { allowed: true };
     }

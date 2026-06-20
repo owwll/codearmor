@@ -8,7 +8,6 @@ import * as queries from '../../db/queries';
 import { logger } from '../../utils/logger';
 import { ScanRequest, AgentStatus } from '../../types/scan.types';
 import { ArmorIQService } from '../armoriq/armoriq.service';
-
 function parsePagination(query: Record<string, unknown>): { page: number; limit: number; offset: number } {
   const page  = Math.max(1, parseInt(String(query.page  ?? 1),  10) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(String(query.limit ?? 20), 10) || 20));
@@ -51,14 +50,17 @@ export async function startScan(req: Request, res: Response): Promise<void> {
   }
 
   try {
+    const userEmail = req.user!.username;
+
     // Verify intent with ArmorIQ before starting
     const verifyResult = await ArmorIQService.verifyIntent('scan_start', {
       projectPath: resolvedPath,
       projectName: (typeof projectName === 'string' && projectName.trim())
         ? projectName.trim()
         : path.basename(resolvedPath),
-      userId
-    });
+      userId,
+      userEmail
+    }, userEmail);
 
     if (!verifyResult.allowed) {
       res.status(403).json({
@@ -97,6 +99,7 @@ export async function startScan(req: Request, res: Response): Promise<void> {
       projectPath: resolvedPath,
       projectName: typeof projectName === 'string' ? projectName.trim() : undefined,
       userId,
+      userEmail,
     };
 
     // Trigger orchestrator in background

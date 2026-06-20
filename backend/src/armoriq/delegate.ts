@@ -2,25 +2,21 @@ import type { IntentToken } from '@armoriq/sdk';
 import { FileMap } from '../types/agent.types';
 import { logger } from '../utils/logger';
 
-/**
- * Distributes the IntentToken to each of the 11 agents.
- *
- * In the SDK model, a single signed IntentToken covers the full execution plan.
- * Each agent uses the same token when calling armorIQ.invoke() — the proxy
- * enforces per-step policies via the Merkle proof embedded in the token.
- *
- * We return a Map<agentId, IntentToken> so the agent-runner API is unchanged,
- * and each agent can still retrieve its individual token by ID.
- *
- * The agentScopes mapping is preserved here for documentation — it defines
- * the intended read scope per agent and can be used to build policy metadata
- * in future when the platform supports per-agent sub-token delegation.
- */
+const DEFAULT_AGENTS = 'route-analyst,auth-inspector,injection-hunter,data-flow-tracer,config-auditor,xss-scanner,csrf-scanner,file-security,api-security,business-logic,crypto-auditor';
+
+function getAgentIds(): string[] {
+  const raw = process.env.ARMORIQ_AGENTS || DEFAULT_AGENTS;
+  return raw.split(',').map(s => s.trim()).filter(Boolean);
+}
+
 export async function delegateToAgents(
   intentToken: IntentToken,
-  fileMap: FileMap
+  fileMap: FileMap,
+  userEmail?: string
 ): Promise<Map<string, IntentToken>> {
-  const agentScopes: Record<string, string[]> = {
+  const agentIds = getAgentIds();
+
+  const scopeMap: Record<string, string[]> = {
     'route-analyst':   [...fileMap.routeFiles, ...fileMap.controllerFiles],
     'auth-inspector':  [...fileMap.authFiles,  ...fileMap.modelFiles],
     'injection-hunter': fileMap.sourceFiles,
@@ -36,15 +32,20 @@ export async function delegateToAgents(
 
   const delegations = new Map<string, IntentToken>();
 
-  for (const [agentId, allowedFiles] of Object.entries(agentScopes)) {
-    const uniqueFiles = Array.from(new Set(allowedFiles));
+  for (const agentId of agentIds) {
+    const allowedFiles = scopeMap[agentId];
+    if (!allowedFiles) {
+      logger.warn('ArmorIQ', `Agent "${agentId}" from ARMORIQ_AGENTS has no scope mapping — using all source files`);
+    }
+    const uniqueFiles = Array.from(new Set(allowedFiles || fileMap.sourceFiles));
 
-    // Tag the token with scope metadata so the agent can log it
     const agentToken: IntentToken = {
       ...intentToken,
       rawToken: {
         ...intentToken.rawToken,
-        agentId,
+        agent_id: agentId,
+        user_id: userEmail || null,
+        userEmail: userEmail || null,
         scopedFiles: uniqueFiles.length,
       },
     };
@@ -52,6 +53,6 @@ export async function delegateToAgents(
     delegations.set(agentId, agentToken);
   }
 
-  logger.info('ArmorIQ', '[ArmorIQ] Intent token distributed to all 11 agents');
+  logger.info('ArmorIQ', `[ArmorIQ] Intent token distributed to ${agentIds.length} agents (user: ${userEmail || 'anonymous'})`);
   return delegations;
 }

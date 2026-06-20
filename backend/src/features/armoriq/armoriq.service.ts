@@ -1,82 +1,33 @@
-import axios from 'axios';
+import { armorIQ } from '../../armoriq/armoriq-client';
+import { logger } from '../../utils/logger';
 
-const ARMORIQ_API_URL = process.env.ARMORIQ_ENDPOINT || process.env.ARMORIQ_API_URL || 'https://api.armoriq.ai/v1';
 const ARMORIQ_API_KEY = process.env.ARMORIQ_API_KEY || '';
 
 export class ArmorIQService {
-  /**
-   * Fetch intent logs from ArmorIQ
-   */
-  static async getIntentLogs() {
-    if (!ARMORIQ_API_KEY) {
-      return { status: 'unconfigured', message: 'ArmorIQ API Key not set', logs: [] };
-    }
-    try {
-      const response = await axios.get(`${ARMORIQ_API_URL}/intents/logs`, {
-        headers: { Authorization: `Bearer ${ARMORIQ_API_KEY}` }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch ArmorIQ intent logs:', error);
-      throw new Error('ArmorIQ service unavailable');
-    }
-  }
-
-  /**
-   * Fetch active policies from ArmorIQ
-   */
-  static async getPolicies() {
-    if (!ARMORIQ_API_KEY) {
-      return { status: 'unconfigured', message: 'ArmorIQ API Key not set', policies: [] };
-    }
-    try {
-      const response = await axios.get(`${ARMORIQ_API_URL}/policies`, {
-        headers: { Authorization: `Bearer ${ARMORIQ_API_KEY}` }
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch ArmorIQ policies:', error);
-      throw new Error('ArmorIQ service unavailable');
-    }
-  }
-
-  /**
-   * Verify an action/intent before execution
-   */
-  static async verifyIntent(actionType: string, payload: any) {
+  static async verifyIntent(actionType: string, payload: any, userEmail?: string) {
     if (!ARMORIQ_API_KEY || ARMORIQ_API_KEY === 'mock') {
-      // In a real scenario, you might want to fail closed. Failing open for now if unconfigured.
       return { allowed: true, reason: 'unconfigured' };
     }
 
-    let endpoint = ARMORIQ_API_URL;
-    if (endpoint.endsWith('/')) {
-      endpoint = endpoint.slice(0, -1);
-    }
-    if (endpoint.endsWith('/v1')) {
-      endpoint = endpoint.slice(0, -3);
+    if (userEmail) {
+      armorIQ.forUser(userEmail);
     }
 
     try {
-      const response = await axios.post(`${endpoint}/iap/verify`, {
-        action: actionType,
-        payload
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${ARMORIQ_API_KEY}`,
-          'x-api-key': ARMORIQ_API_KEY
-        }
+      const planCapture = armorIQ.capturePlan({
+        planType: actionType,
+        projectId: payload.projectName || payload.projectPath,
+        agentManifest: ['scan_start'],
+        totalFiles: 0,
+        allowedOperations: ['scan_start'],
+        forbiddenOperations: [],
+        timestamp: new Date().toISOString(),
       });
-      return response.data; // e.g., { allowed: true/false }
+
+      return await armorIQ.verifyIntent(planCapture);
     } catch (error: any) {
-      if (error.response && error.response.status === 404) {
-        console.warn('verifyIntent returned 404 — blocking action (endpoint misconfigured)');
-        return { allowed: false, reason: 'Endpoint not found (404)' };
-      }
-      console.error('Failed to verify intent with ArmorIQ:', error.message || error);
-      // Fail secure pattern: block action if ArmorIQ is unreachable or returns other errors
-      return { allowed: false, reason: error.response?.data?.error || 'ArmorIQ unreachable' };
+      logger.error('ArmorIQService', `Intent verification failed for ${actionType}`, error as object);
+      return { allowed: false, reason: error.message || 'ArmorIQ verification failed' };
     }
   }
 }

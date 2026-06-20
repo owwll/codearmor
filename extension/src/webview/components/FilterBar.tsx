@@ -7,10 +7,10 @@ interface Props {
 }
 
 const FILTERS = [
-  { value: null,       label: 'All',      emoji: '🛡️',  color: 'rgba(255,255,255,0.15)', activeColor: 'rgba(255,255,255,0.25)' },
-  { value: 'CRITICAL', label: 'Critical', emoji: '🔴',  color: 'rgba(244,67,54,0.15)',   activeColor: 'rgba(244,67,54,0.4)'   },
-  { value: 'WARNING',  label: 'Warning',  emoji: '🟡',  color: 'rgba(255,152,0,0.15)',   activeColor: 'rgba(255,152,0,0.4)'   },
-  { value: 'INFO',     label: 'Info',     emoji: '🔵',  color: 'rgba(33,150,243,0.15)',  activeColor: 'rgba(33,150,243,0.4)'  },
+  { value: null,       label: 'All',      emoji: '🛡️',  color: 'rgba(79,70,229,0.08)', activeColor: 'rgba(79,70,229,0.25)' },
+  { value: 'CRITICAL', label: 'Critical', emoji: '🔴',  color: 'rgba(220,38,38,0.15)',  activeColor: 'rgba(220,38,38,0.4)'  },
+  { value: 'WARNING',  label: 'Warning',  emoji: '🟡',  color: 'rgba(217,119,6,0.15)',  activeColor: 'rgba(217,119,6,0.4)'  },
+  { value: 'INFO',     label: 'Info',     emoji: '🔵',  color: 'rgba(2,132,199,0.15)',  activeColor: 'rgba(2,132,199,0.4)'  },
 ] as const;
 
 function getCount(value: typeof FILTERS[number]['value'], counts: Props['counts']): number | null {

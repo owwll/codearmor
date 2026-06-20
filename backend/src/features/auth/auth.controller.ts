@@ -191,44 +191,58 @@ export async function callback(req: Request, res: Response): Promise<void> {
       }
     });
 
-    // Provide a beautiful styled success screen
+    // Provide a beautiful styled success screen matching the actual theme
     res.send(`
       <!DOCTYPE html>
       <html>
       <head>
         <title>CodeArmor Login Success</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
           body {
-            background-color: #030712;
-            color: #f8fafc;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #F8FAFC;
+            color: #334155;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
+            -webkit-font-smoothing: antialiased;
           }
           .card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
             padding: 40px;
-            border-radius: 16px;
+            border-radius: 8px;
             text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             max-width: 400px;
+            transition: border-color 200ms ease, box-shadow 200ms ease;
           }
-          h1 { color: #00f5ff; font-size: 24px; margin-bottom: 16px; }
-          p { color: #94a3b8; font-size: 14px; line-height: 1.5; }
-          .shield { font-size: 48px; margin-bottom: 20px; }
+          h1 { color: #0F172A; font-size: 20px; font-weight: 600; margin-bottom: 12px; margin-top: 0; }
+          p { color: #64748B; font-size: 14px; line-height: 1.5; margin-bottom: 8px; }
+          .shield { font-size: 48px; margin-bottom: 24px; color: #4F46E5; }
+          .success-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            background: #ECFDF5;
+            color: #059669;
+            border-radius: 50%;
+            margin-bottom: 24px;
+            font-size: 32px;
+          }
         </style>
       </head>
       <body>
         <div class="card">
-          <div class="shield">🛡️</div>
-          <h1>Login Successful!</h1>
+          <div class="success-icon">✓</div>
+          <h1>Login Successful</h1>
           <p>You have successfully authenticated VS Code with CodeArmor.</p>
-          <p>You may now close this browser window and return to VS Code.</p>
+          <p>You may now close this browser window and return to your editor.</p>
         </div>
       </body>
       </html>

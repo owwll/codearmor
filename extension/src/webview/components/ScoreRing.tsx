@@ -5,9 +5,9 @@ interface Props {
 }
 
 function getColor(score: number): string {
-  if (score >= 80) return '#4CAF50';
-  if (score >= 50) return '#FF9800';
-  return '#F44336';
+  if (score >= 80) return '#059669';
+  if (score >= 50) return '#D97706';
+  return '#DC2626';
 }
 
 const SIZE        = 120;
