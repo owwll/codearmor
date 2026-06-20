@@ -35,6 +35,8 @@ export class PanelManager {
       'webview'
     );
 
+    const logoUri = vscode.Uri.joinPath(this.context.extensionUri, 'codearmor.png');
+
     this.panel = vscode.window.createWebviewPanel(
       'codearmor.panel',
       'CodeArmor Security Report',
@@ -42,10 +44,14 @@ export class PanelManager {
       {
         enableScripts:            true,
         retainContextWhenHidden:  true,
-        localResourceRoots:       [webviewDistUri],
+        localResourceRoots:       [
+          webviewDistUri,
+          this.context.extensionUri
+        ],
       }
     );
 
+    this.panel.iconPath = logoUri;
     this.panel.webview.html = this._getWebviewHtml();
 
     this.panel.onDidDispose(() => {
@@ -162,14 +168,19 @@ export class PanelManager {
       vscode.Uri.joinPath(distPath, 'bundle.js')
     );
 
-    const logoUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this.context.extensionUri, 'codearmor.png')
-    );
+    const logoPath = vscode.Uri.joinPath(this.context.extensionUri, 'codearmor.png').fsPath;
+    let logoUriString = '';
+    try {
+      const logoBuffer = fs.readFileSync(logoPath);
+      logoUriString = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+    } catch {
+      logoUriString = '';
+    }
 
     html = html
       .replace(/__CSP_NONCE__/g,  nonce)
       .replace(/__SCRIPT_URI__/g, scriptUri.toString())
-      .replace(/__LOGO_URI__/g, logoUri.toString());
+      .replace(/\{\{LOGO_URI\}\}/g, logoUriString);
 
     return html;
   }

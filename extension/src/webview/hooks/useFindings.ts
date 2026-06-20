@@ -69,7 +69,7 @@ type Action =
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SCAN_START':
-      return { ...state, phase: 'loading', error: undefined };
+      return { ...INITIAL_STATE, phase: 'loading', auth: state.auth };
 
     case 'AGENT_UPDATE': {
       const { event } = action;

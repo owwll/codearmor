@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AgentStatus } from '../hooks/useFindings';
 
 const AGENT_NAMES: Record<string, string> = {
@@ -19,96 +19,162 @@ const ALL_AGENT_IDS = Object.keys(AGENT_NAMES);
 
 const THEME = {
   primary: '#4F46E5',
-  'primary-border': 'rgba(79,70,229,0.4)',
-  success: '#059669',
-  'success-border': 'rgba(5,150,105,0.4)',
+  'primary-glow': 'rgba(79,70,229,0.6)',
+  'primary-subtle': 'rgba(79,70,229,0.12)',
+  success: '#10b981',
+  'success-glow': 'rgba(16,185,129,0.5)',
   error: '#DC2626',
 };
 
-function dotColor(status: AgentStatus['status'] | 'waiting'): string {
-  switch (status) {
-    case 'running':  return THEME.primary;
-    case 'complete': return THEME.success;
-    case 'error':    return THEME.error;
-    default:         return 'rgba(255,255,255,0.15)';
-  }
-}
-
-function AgentCard({ agentId, status, findingsCount }: {
+function AgentCard({ agentId, status, findingsCount, index }: {
   agentId: string;
   status:  AgentStatus['status'] | 'waiting';
   findingsCount: number;
+  index: number;
 }) {
-  const isRunning = status === 'running';
+  const isWaiting  = status === 'waiting';
+  const isRunning  = status === 'running';
   const isComplete = status === 'complete';
-  const dotRef = useRef<HTMLDivElement>(null);
+  const isError    = status === 'error';
+  const [justCompleted, setJustCompleted] = useState(false);
+  const prevStatusRef = useRef(status);
 
   useEffect(() => {
-    const el = dotRef.current;
-    if (!el) return;
-    if (isRunning) {
-      el.style.animation = 'pulse 0.8s ease-in-out infinite';
-    } else {
-      el.style.animation = 'none';
+    if (prevStatusRef.current !== 'complete' && status === 'complete') {
+      setJustCompleted(true);
+      const t = setTimeout(() => setJustCompleted(false), 600);
+      return () => clearTimeout(t);
     }
-  }, [isRunning]);
+    prevStatusRef.current = status;
+  }, [status]);
 
   const cardStyle: React.CSSProperties = {
-    position:      'relative',
-    display:       'flex',
-    alignItems:    'center',
-    gap:           '10px',
-    padding:       '12px',
-    borderRadius:  '12px',
-    background:    isRunning ? 'rgba(79,70,229,0.04)' : 'rgba(255,255,255,0.02)',
-    border:        `1px solid ${isRunning ? 'rgba(79,70,229,0.3)' : isComplete ? 'rgba(5,150,105,0.2)' : 'rgba(255,255,255,0.06)'}`,
-    transition:    'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    overflow:      'hidden',
-    boxShadow:     isRunning ? '0 0 16px rgba(79,70,229,0.15)' : 'none',
-  };
-
-  const dotStyle: React.CSSProperties = {
-    width:        '8px',
-    height:       '8px',
-    borderRadius: '50%',
-    background:   dotColor(status),
-    flexShrink:   0,
-    boxShadow:    isRunning ? `0 0 8px ${THEME.primary}` : isComplete ? `0 0 6px ${THEME.success}` : 'none',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '10px 12px',
+    borderRadius: '10px',
+    background: isRunning ? THEME['primary-subtle']
+              : isComplete ? 'rgba(16,185,129,0.06)'
+              : 'rgba(255,255,255,0.02)',
+    border: `1px solid ${
+      isRunning ? `${THEME.primary}40`
+      : isComplete ? 'rgba(16,185,129,0.2)'
+      : isError ? 'rgba(220,38,38,0.3)'
+      : 'rgba(255,255,255,0.06)'
+    }`,
+    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: isRunning ? `0 0 20px ${THEME['primary-glow']}08` : 'none',
+    animation: isComplete && justCompleted ? 'completePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none',
+    opacity: isWaiting ? 0.5 : 1,
+    animationDelay: isWaiting ? `${index * 0.03}s` : '0s',
   };
 
   return (
     <div style={cardStyle}>
-      {/* Scanline overlay for running agents */}
-      {isRunning && (
-        <div style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          height: '2px',
-          background: `linear-gradient(90deg, transparent, ${THEME.primary}, transparent)`,
-          animation: 'scanline 2s linear infinite',
-          opacity: 0.7
-        }} />
-      )}
-      
-      <div ref={dotRef} style={dotStyle} />
-      <span style={{ 
-        fontSize: '11px', 
+      <div style={{
+        position: 'relative',
+        width: '16px',
+        height: '16px',
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        {isWaiting && (
+          <div style={{
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.2)',
+          }} />
+        )}
+        {isRunning && (
+          <>
+            <div style={{
+              position: 'absolute',
+              width: '16px',
+              height: '16px',
+              borderRadius: '50%',
+              border: `2px solid ${THEME.primary}`,
+              borderTopColor: 'transparent',
+              animation: 'agentSpin 0.8s linear infinite',
+            }} />
+            <div style={{
+              width: '4px',
+              height: '4px',
+              borderRadius: '50%',
+              background: THEME.primary,
+              boxShadow: `0 0 6px ${THEME['primary-glow']}`,
+            }} />
+          </>
+        )}
+        {isComplete && (
+          <div style={{
+            width: '16px',
+            height: '16px',
+            borderRadius: '50%',
+            background: THEME.success,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: justCompleted ? `0 0 12px ${THEME['success-glow']}` : 'none',
+            transition: 'box-shadow 0.5s ease',
+          }}>
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+              <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        )}
+        {isError && (
+          <div style={{
+            width: '16px',
+            height: '16px',
+            borderRadius: '50%',
+            background: THEME.error,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+              <path d="M3 3l6 6M9 3l-6 6" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </div>
+        )}
+      </div>
+
+      <span style={{
+        fontSize: '11px',
         fontWeight: isRunning ? 600 : 500,
-        color: isRunning ? THEME.primary : 'inherit',
-        flex: 1, 
-        opacity: status === 'waiting' ? 0.4 : 1 
+        color: isRunning ? THEME.primary
+             : isComplete ? '#e2e8f0'
+             : isError ? THEME.error
+             : 'rgba(255,255,255,0.6)',
+        flex: 1,
+        transition: 'color 0.3s ease',
       }}>
         {AGENT_NAMES[agentId] ?? agentId}
       </span>
+
+      {isRunning && (
+        <div style={{
+          width: '3px',
+          height: '3px',
+          borderRadius: '50%',
+          background: THEME.primary,
+          boxShadow: `0 0 6px ${THEME['primary-glow']}`,
+        }} />
+      )}
+
       {isComplete && (
         <span style={{
           fontSize: '10px',
-          padding: '2px 6px',
-          borderRadius: '4px',
-          background: findingsCount > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)',
+          padding: '2px 7px',
+          borderRadius: '5px',
+          background: findingsCount > 0 ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)',
           color: findingsCount > 0 ? '#f59e0b' : '#10b981',
-          fontWeight: 600
+          fontWeight: 600,
+          letterSpacing: '0.2px',
         }}>
           {findingsCount > 0 ? `${findingsCount} flaws` : 'Secure'}
         </span>
@@ -124,104 +190,168 @@ interface Props {
 export function LoadingScreen({ agentStatuses }: Props) {
   const statusMap = new Map(agentStatuses.map((a) => [a.agentId, a]));
   const completedCount = agentStatuses.filter((a) => a.status === 'complete').length;
-
-  const containerStyle: React.CSSProperties = {
-    padding:        '40px 24px',
-    display:        'flex',
-    flexDirection:  'column',
-    alignItems:     'center',
-    gap:            '28px',
-    minHeight:      '100vh',
-    background:     '#030712'
-  };
+  const runningCount   = agentStatuses.filter((a) => a.status === 'running').length;
+  const totalAgents = ALL_AGENT_IDS.length;
+  const progressPct = (completedCount / totalAgents) * 100;
 
   return (
     <>
       <style>{`
-        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.3)} }
-        @keyframes scanline { 0% { top: 0%; } 100% { top: 100%; } }
-        @keyframes radar { 0% { transform: scale(0.9); opacity: 0.8; } 100% { transform: scale(1.3); opacity: 0; } }
+        @keyframes agentSpin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes completePop {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.04); }
+          100% { transform: scale(1); }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
+        }
+        @keyframes radarPulse {
+          0% { transform: scale(0.95); opacity: 0.6; }
+          50% { transform: scale(1.05); opacity: 0.2; }
+          100% { transform: scale(0.95); opacity: 0.6; }
+        }
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes sweep {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
       `}</style>
 
-      <div style={containerStyle}>
-        {/* Animated Cyber Radar Icon */}
-        <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{
+        padding: '32px 24px 40px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '24px',
+        minHeight: '100vh',
+        background: '#030712',
+      }}>
+        {/* Radar + branding */}
+        <div style={{ position: 'relative', width: '80px', height: '80px', flexShrink: 0 }}>
           <div style={{
             position: 'absolute',
-            width: '100%',
-            height: '100%',
-            border: `2px solid ${THEME['primary-border']}`,
+            inset: 0,
+            border: '1px solid rgba(79,70,229,0.15)',
             borderRadius: '50%',
-            animation: 'radar 2s cubic-bezier(0.1, 0.8, 0.3, 1) infinite',
-            opacity: 0.5,
+            animation: 'radarPulse 3s ease-in-out infinite',
           }} />
           <div style={{
             position: 'absolute',
-            width: '80%',
-            height: '80%',
-            border: '1px dashed rgba(79,70,229,0.3)',
+            inset: '8px',
+            border: '1px dashed rgba(79,70,229,0.2)',
             borderRadius: '50%',
           }} />
           <div style={{
-            background: 'rgba(79,70,229,0.05)',
-            border: `1px solid ${THEME['primary-border']}`,
+            position: 'absolute',
+            width: '50%',
+            height: '50%',
+            top: '25%',
+            left: '25%',
+            background: `conic-gradient(from 0deg, transparent 60%, ${THEME.primary}40 80%, transparent 100%)`,
             borderRadius: '50%',
-            width: '56px',
-            height: '56px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 16px rgba(79,70,229,0.2)'
-          }}>
-            <span style={{ fontSize: '26px' }}>🛡️</span>
-          </div>
+            animation: 'sweep 2.5s linear infinite',
+            mask: 'radial-gradient(circle at 50% 50%, transparent 35%, black 36%)',
+            WebkitMask: 'radial-gradient(circle at 50% 50%, transparent 35%, black 36%)',
+          }} />
+          <div style={{
+            position: 'absolute',
+            inset: '22px',
+            borderRadius: '50%',
+            background: THEME['primary-subtle'],
+            border: `1.5px solid ${THEME.primary}30`,
+          }} />
         </div>
 
+        {/* Title */}
         <div style={{ textAlign: 'center' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 6px 0', letterSpacing: '-0.3px', color: '#f8fafc' }}>
-            CodeArmor Agent Inspection
+          <h2 style={{
+            fontSize: '16px',
+            fontWeight: 700,
+            margin: '0 0 4px 0',
+            letterSpacing: '-0.2px',
+            color: '#f1f5f9',
+          }}>
+            Agent Scan in Progress
           </h2>
-          <p style={{ fontSize: '11px', opacity: 0.5, margin: 0 }}>
-            Active agents: {completedCount} / 11 compiled
+          <p style={{ fontSize: '11px', opacity: 0.45, margin: 0 }}>
+            {completedCount} / {totalAgents} agents complete
+            {runningCount > 0 && ` · ${runningCount} active`}
           </p>
         </div>
 
-        {/* HUD progress meter */}
-        <div style={{ width: '100%', maxWidth: '500px' }}>
-          <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{
-              height:     '100%',
-              background: 'linear-gradient(90deg, #4F46E5, #818CF8)',
-              width:      `${(completedCount / 11) * 100}%`,
-              transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow:  '0 0 8px #4F46E5'
-            }} />
+        {/* Progress bar with shimmer */}
+        <div style={{
+          width: '100%',
+          maxWidth: '480px',
+          height: '4px',
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '4px',
+          overflow: 'hidden',
+          position: 'relative',
+        }}>
+          <div style={{
+            height: '100%',
+            width: `${progressPct}%`,
+            background: `linear-gradient(90deg, ${THEME.primary}, #818CF8)`,
+            borderRadius: '4px',
+            transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: `0 0 8px ${THEME['primary-glow']}`,
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            {progressPct < 100 && (
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: `linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)`,
+                animation: 'shimmer 1.5s ease-in-out infinite',
+              }} />
+            )}
           </div>
         </div>
 
-        {/* Asymmetric Agent console list */}
+        {/* Agent grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-          gap: '10px',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gap: '8px',
           width: '100%',
-          maxWidth: '500px',
+          maxWidth: '560px',
         }}>
-          {ALL_AGENT_IDS.map((id) => {
+          {ALL_AGENT_IDS.map((id, i) => {
             const agent = statusMap.get(id);
             return (
-              <AgentCard
-                key={id}
-                agentId={id}
-                status={agent?.status ?? 'waiting'}
-                findingsCount={agent?.findingsCount ?? 0}
-              />
+              <div key={id} style={{
+                animation: 'fadeSlideUp 0.4s ease both',
+                animationDelay: `${i * 0.04}s`,
+              }}>
+                <AgentCard
+                  agentId={id}
+                  index={i}
+                  status={agent?.status ?? 'waiting'}
+                  findingsCount={agent?.findingsCount ?? 0}
+                />
+              </div>
             );
           })}
         </div>
 
-        <p style={{ fontSize: '10px', opacity: 0.3, letterSpacing: '0.5px', textTransform: 'uppercase', marginTop: '12px' }}>
-          Secure Encryption Pipeline Active
+        {/* Status footer */}
+        <p style={{
+          fontSize: '9px',
+          opacity: 0.25,
+          letterSpacing: '0.8px',
+          textTransform: 'uppercase',
+          marginTop: '4px',
+        }}>
+          {completedCount === totalAgents ? 'Compilation complete' : 'Scanning codebase across 11 vectors'}
         </p>
       </div>
     </>

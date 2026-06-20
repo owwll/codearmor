@@ -124,7 +124,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   };
 
   // Wire rescan button in the webview
-  panel.onRescanRequested = () => { void runScan(); };
+  panel.onRescanRequested = () => {
+    output.appendLine('[CodeArmor] Rescan requested from webview');
+    void runScan();
+  };
 
   // ── Commands ────────────────────────────────────────────────────────────────
   context.subscriptions.push(

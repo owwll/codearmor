@@ -20,7 +20,7 @@
     "configuration": {
       "title": "CodeArmor",
       "properties": {
-        "codearmor.autoScanOnOpen": { "type": "boolean", "default": true },
+        "codearmor.autoScanOnOpen": { "type": "boolean", "default": false },
         "codearmor.autoScanOnSave": { "type": "boolean", "default": false },
         "codearmor.backendPort": { "type": "number", "default": 3847 }
       }

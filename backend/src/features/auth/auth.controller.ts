@@ -191,7 +191,7 @@ export async function callback(req: Request, res: Response): Promise<void> {
       }
     });
 
-    // Provide a beautiful styled success screen matching the actual theme
+    // Provide a beautiful styled success screen matching the actual theme (Dark mode)
     res.send(`
       <!DOCTYPE html>
       <html>
@@ -200,8 +200,8 @@ export async function callback(req: Request, res: Response): Promise<void> {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
           body {
-            background-color: #F8FAFC;
-            color: #334155;
+            background-color: #0F172A;
+            color: #F8FAFC;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             display: flex;
             align-items: center;
@@ -211,29 +211,29 @@ export async function callback(req: Request, res: Response): Promise<void> {
             -webkit-font-smoothing: antialiased;
           }
           .card {
-            background: #FFFFFF;
-            border: 1px solid #E2E8F0;
+            background: #1E293B;
+            border: 1px solid #334155;
             padding: 40px;
-            border-radius: 8px;
+            border-radius: 12px;
             text-align: center;
-            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             max-width: 400px;
-            transition: border-color 200ms ease, box-shadow 200ms ease;
           }
-          h1 { color: #0F172A; font-size: 20px; font-weight: 600; margin-bottom: 12px; margin-top: 0; }
-          p { color: #64748B; font-size: 14px; line-height: 1.5; margin-bottom: 8px; }
-          .shield { font-size: 48px; margin-bottom: 24px; color: #4F46E5; }
+          h1 { color: #F8FAFC; font-size: 22px; font-weight: 600; margin-bottom: 12px; margin-top: 0; }
+          p { color: #94A3B8; font-size: 14px; line-height: 1.5; margin-bottom: 8px; }
           .success-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             width: 64px;
             height: 64px;
-            background: #ECFDF5;
-            color: #059669;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10B981;
             border-radius: 50%;
             margin-bottom: 24px;
             font-size: 32px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 24px rgba(16, 185, 129, 0.4);
           }
         </style>
       </head>
