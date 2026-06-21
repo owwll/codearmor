@@ -87,3 +87,9 @@ codearmor/
    ```
 5. **Run Extension**:
    Open `extension/` in VS Code and press `F5` to start debugging.
+
+## AI Context Capabilities
+CodeArmor's agents are powered by models with massive context windows (e.g., up to 2,000,000 tokens). This enables the system to:
+- Handle **entire medium-to-large codebases** (150,000 to 300,000+ lines of code) in a single analysis context.
+- Use dynamic exploration strategies (searching, listing, and targeted reading) to efficiently scan even larger enterprise repositories.
+- Correlate vulnerabilities across multiple files and modules without "forgetting" earlier context, ensuring deep architectural understanding.
