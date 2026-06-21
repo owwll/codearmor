@@ -24,7 +24,7 @@ CodeArmor scans for 40+ vulnerability types across 11 AI agents:
 
 ## Tech Stack
 - **Extension**: VS Code Extension API, TypeScript, React, esbuild.
-- **Backend**: Node.js, Express, better-sqlite3 (SQLite), bcryptjs, jwt.
+- **Backend**: Node.js, Express, PostgreSQL, Drizzle ORM, bcryptjs, jwt.
 - **Admin UI**: React, Vite, Tailwind CSS, Axios.
 
 ## Architecture Overview
@@ -34,7 +34,7 @@ graph TD
   C[Admin UI] -->|API/Metrics| B
   B -->|Orchestrate| D[11 Parallel AI Agents]
   D -->|Raw Findings| E[ArmorClaw Validator]
-  E -->|Consolidate & Score| F[SQLite Database]
+  E -->|Consolidate & Score| F[PostgreSQL Database]
 ```
 
 ## Security Score Formula
@@ -46,6 +46,24 @@ Where deductions are:
 - **CRITICAL Findings**: -15 points each (capped at -60)
 - **WARNING Findings**: -5 points each (capped at -30)
 - **INFO Findings**: -1 point each (capped at -10)
+
+## Project Structure
+CodeArmor adopts a feature-based (domain-driven) folder structure to ensure scalability and maintainability:
+
+```text
+codearmor/
+├── backend/
+│   └── src/
+│       ├── features/
+│       │   ├── admin/       # Admin-related APIs
+│       │   ├── armoriq/     # ArmorIQ / ArmorClaw integration
+│       │   ├── auth/        # Authentication APIs
+│       │   └── scan/        # Security scanning orchestration
+│       ├── db/              # Drizzle ORM setup and schema
+│       └── agents/          # AI agent definitions
+├── admin-ui/                # React UI for managing vulnerabilities
+└── extension/               # VS Code extension and Webview UI
+```
 
 ## Quick Start & Setup
 1. **Environment Setup**:
