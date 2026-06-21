@@ -38,6 +38,7 @@ export async function upsertProject(data: ProjectRecord): Promise<void> {
         target: projects.projectPath,
         set: {
           projectName: record.projectName,
+          userId: record.userId,
           language: record.language,
           framework: record.framework,
           updatedAt: record.updatedAt,
